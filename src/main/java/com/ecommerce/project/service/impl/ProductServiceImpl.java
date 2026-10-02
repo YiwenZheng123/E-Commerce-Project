@@ -160,7 +160,7 @@ public class ProductServiceImpl implements ProductService {
         savedProduct.setCategory(product.getCategory());
         savedProduct.setProductName(product.getProductName());
         savedProduct.setDescription(product.getDescription());
-        savedProduct.setQuantity(product.getQuantity());
+        savedProduct.setStock(product.getStock());
         savedProduct.setDiscount(product.getDiscount());
         savedProduct.setPrice(product.getPrice());
 //        savedProduct.setSpecialPrice(product.getSpecialPrice());
@@ -169,7 +169,10 @@ public class ProductServiceImpl implements ProductService {
         List<CartDTO> cartDTOS = carts.stream().map(cart ->{
             CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
             List<ProductDTO> productDTOS = cart.getCartItems().stream()
-                    .map(p -> modelMapper.map(p.getProduct(),ProductDTO.class))
+                    .map(p -> {
+                        ProductDTO dto = modelMapper.map(p.getProduct(), ProductDTO.class);
+                        return dto;
+                    })
                     .collect(Collectors.toList());
             cartDTO.setProducts(productDTOS);
             return cartDTO;

@@ -28,7 +28,8 @@ public class Product {
     @NotBlank
     @Size(min = 6, message = "Description must contain at least 6 characters")
     private String description;
-    private Integer quantity;
+    @Column(name = "quantity") // Preserve the existing inventory column.
+    private Integer stock;
     private double price; // 100
     private double discount; // 25
     private double specialPrice; // 75

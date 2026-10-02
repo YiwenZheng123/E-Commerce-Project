@@ -49,6 +49,9 @@ public class Address {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @OneToMany(mappedBy = "address")
+    List<Order> orders = new ArrayList<>();
+
     public Address(String street, String buildingName, String city, String state, String country, String pincode) {
         this.street = street;
         this.buildingName = buildingName;
