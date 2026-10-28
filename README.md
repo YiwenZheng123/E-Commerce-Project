@@ -127,7 +127,7 @@ Open the URL printed by Vite, usually `http://localhost:5173`. Use matching Stri
 | `/admin/products`, `/admin/orders` | Product and order dashboard; also used by sellers |
 | `/admin/categories`, `/admin/sellers` | Admin category and seller management |
 
-The buyer's **My Orders** link is present in the menu, but its page is not yet implemented. PayPal currently displays an unavailable message.
+The buyer's **My Orders** link is present in the menu, but its page is not yet implemented. The current GitHub version displays an unavailable message for PayPal; a sandbox implementation exists in the local development version described below.
 
 ## API overview
 
@@ -144,6 +144,31 @@ The API uses the `/api` prefix. Sign-in sets a JWT cookie, and the frontend send
 | Dashboard | `/api/admin/products`, `/api/admin/orders`, `/api/seller/products`, `/api/seller/orders` |
 
 Product and order dashboard APIs support pagination. The backend page number is zero-based; the dashboard converts the displayed page number before making requests.
+
+## PayPal sandbox checkout (local development)
+
+The PayPal checkout implementation is currently in the local development copy and has **not yet been uploaded to this repository**. The instructions below apply after that implementation is included. This version uses PayPal Sandbox only and charges in USD.
+
+### Configuration
+
+1. In the PayPal Developer Dashboard, select **Sandbox** and create or select an app under **Apps & Credentials**. Use the Client ID and Secret from the same sandbox app.
+2. Set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` as environment variables for the Spring Boot process, for example in the IntelliJ run configuration. The backend reads them through `paypal.client-id` and `paypal.client-secret` in `application.properties`.
+3. Add `VITE_PAYPAL_CLIENT_ID` to `Frontend/ecom-frontend/.env` using the same sandbox Client ID. The frontend Client ID is public; keep the Secret on the backend and never add it to a `VITE_` variable.
+4. Restart both servers after changing their environment variables.
+
+The local backend creates a PayPal order from the server-side cart and selected address. It calculates the amount as the cart subtotal plus 13% tax, then checks the capture status, currency, and amount before creating the application order. The local endpoints are `POST /api/order/paypal` and `POST /api/order/paypal/{paypalOrderId}/capture`.
+
+### Test a payment
+
+1. In the Developer Dashboard, open **Testing Tools → Sandbox Accounts**. A Personal account represents the buyer; the Business account associated with the app represents the merchant.
+2. Sign in to the application, add a product to the cart, select an address, and choose PayPal at checkout.
+3. Check the amount in the PayPal window and approve the payment using the Personal sandbox account.
+4. Sign in to [PayPal Sandbox](https://www.sandbox.paypal.com/) with the corresponding Business sandbox account and check **Activity / Recent Activity** for the transaction. The merchant's net amount may reflect fees.
+5. Check the application order and cart as well. A successful PayPal API request alone does not prove that the application order was saved.
+
+For request details, select **Sandbox → Event Logs → API Calls** in the Developer Dashboard. An order that has only been created and not approved is not a completed payment.
+
+The local implementation has passed mocked service tests and a sandbox order-creation check. A successful capture request was observed in the sandbox API log, but the complete browser-to-database checkout flow still needs verification. The existing Stripe path also requires payment verification and inventory-concurrency review before production use.
 
 ## Development commands
 
