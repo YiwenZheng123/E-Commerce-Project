@@ -1,4 +1,4 @@
-﻿# E-Commerce Project
+# E-Commerce Project
 
 A full-stack e-commerce application with a React storefront and a Spring Boot API. Customers can browse products, manage a cart and addresses, and complete a Stripe checkout. Admins and sellers use a dashboard to manage products and orders.
 
@@ -46,7 +46,7 @@ E-Commerce-Project/
 ### Requirements
 
 - Java 17 or later
-- Node.js 20.19+ or 22.12+ and npm
+- Node.js 20.19 or later within 20.x, or 22.12 or later, and npm
 - PostgreSQL
 - A Stripe account with test API keys for checkout
 
@@ -75,7 +75,11 @@ For example, in PowerShell:
 
 ```powershell
 $env:DB_PASSWORD = "your-database-password"
-$env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$jwtBytes = New-Object byte[] 32
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($jwtBytes)
+$rng.Dispose()
+$env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
 $env:STRIPE_SECRET_KEY = "your-stripe-test-secret-key"
 cd backend
 .\mvnw.cmd spring-boot:run
