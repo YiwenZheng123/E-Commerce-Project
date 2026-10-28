@@ -4,6 +4,8 @@ import com.ecommerce.project.config.AppConstants;
 import com.ecommerce.project.payload.*;
 import com.ecommerce.project.service.OrderService;
 import com.ecommerce.project.service.StripeService;
+import com.ecommerce.project.service.impl.PayPalService;
+import jakarta.validation.Valid;
 import com.ecommerce.project.util.AuthUtil;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -21,6 +24,19 @@ public class OrderController {
     private AuthUtil authUtil;
     @Autowired
     private StripeService stripeService;
+
+    @Autowired
+    private PayPalService payPalService;
+
+    @PostMapping("/order/paypal")
+    public ResponseEntity<Map<String, String>> createPayPalOrder(@Valid @RequestBody PayPalCheckoutRequest request) {
+        return ResponseEntity.ok(Map.of("id", payPalService.createOrder(request.getAddressId())));
+    }
+
+    @PostMapping("/order/paypal/{paypalOrderId}/capture")
+    public ResponseEntity<Map<String, Long>> capturePayPalOrder(@PathVariable String paypalOrderId) {
+        return ResponseEntity.ok(Map.of("orderId", payPalService.captureOrder(paypalOrderId)));
+    }
 
     @PostMapping("/order/users/payments/{paymentMethod}")
     public ResponseEntity<OrderDTO> orderProducts(@PathVariable String paymentMethod,

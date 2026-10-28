@@ -1,5 +1,9 @@
 # React + Vite
 
+## PayPal sandbox checkout
+
+Set `VITE_PAYPAL_CLIENT_ID` in `.env` to your PayPal sandbox app's client ID. Set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` in the backend environment to the corresponding sandbox credentials, then restart both servers. The backend uses the PayPal sandbox API and charges the server-calculated cart total plus 13% tax in USD. Keep the client secret on the backend only.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
