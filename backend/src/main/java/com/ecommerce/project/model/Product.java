@@ -28,7 +28,6 @@ public class Product {
     @NotBlank
     @Size(min = 6, message = "Description must contain at least 6 characters")
     private String description;
-    @Column(name = "quantity") // Preserve the existing inventory column.
     private Integer stock;
     private double price; // 100
     private double discount; // 25
@@ -36,15 +35,32 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "category_id")
+    @ToString.Exclude
     private Category category;
 
 
     @ManyToOne
     @JoinColumn(name = "seller_id")
+    @ToString.Exclude
     private User user;
 
 
     @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @ToString.Exclude
     private List<CartItem> products = new ArrayList<>();
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        return other instanceof Product product
+                && getProductId() != null
+                && getProductId().equals(product.getProductId());
+    }
+
+    @Override
+    public int hashCode() {
+        // Keep Set membership stable when the generated ID or inventory changes.
+        return Product.class.hashCode();
+    }
 
 }

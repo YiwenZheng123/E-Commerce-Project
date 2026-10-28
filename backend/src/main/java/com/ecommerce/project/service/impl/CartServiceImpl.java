@@ -6,6 +6,7 @@ import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.CartItem;
 import com.ecommerce.project.model.Product;
 import com.ecommerce.project.payload.CartDTO;
+import com.ecommerce.project.payload.CartItemDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.repositories.CartItemRepository;
 import com.ecommerce.project.repositories.CartRepository;
@@ -15,6 +16,7 @@ import com.ecommerce.project.util.AuthUtil;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,6 +34,10 @@ public class CartServiceImpl implements CartService {
     AuthUtil authUtil;
     @Autowired
     private ModelMapper modelMapper;
+    @Value("${project.image}")
+    private String image;
+    @Value("${image.base.url}")
+    private String imageBaseUrl;
 
 
     @Override
@@ -92,7 +98,6 @@ public class CartServiceImpl implements CartService {
                     List<ProductDTO> productDTOS = cart.getCartItems().stream()
                             .map(ci -> {
                                 ProductDTO productDTO = modelMapper.map(ci.getProduct(), ProductDTO.class);
-                                productDTO.setStock(ci.getQuantity());
                                 return productDTO;
                             })
                             .collect(Collectors.toList());
@@ -103,7 +108,9 @@ public class CartServiceImpl implements CartService {
 
         return cartDTOS;
     }
-
+    private String constructImageUrl(String imageName){
+        return imageBaseUrl.endsWith("/") ? imageBaseUrl + imageName : imageBaseUrl + "/" + imageName;
+    }
     @Override
     public CartDTO getCart(String email, Long cartId) {
         Cart cart = cartRepository.findCartByEmailAndCartId(email, cartId);
@@ -114,9 +121,12 @@ public class CartServiceImpl implements CartService {
         List<ProductDTO> productDTO = cart.getCartItems().stream()
                 .map(ci -> {
                     ProductDTO dto = modelMapper.map(ci.getProduct(), ProductDTO.class);
+                    dto.setQuantity(ci.getQuantity());
+                    dto.setImage(constructImageUrl(dto.getImage()));
                     return dto;
                 })
                 .collect(Collectors.toList());
+
         cartDTO.setProducts(productDTO);
         return cartDTO;
     }
@@ -204,6 +214,52 @@ public class CartServiceImpl implements CartService {
         cartItem.setProductPrice(product.getSpecialPrice());
         cart.setTotalPrice(cartPrice + cartItem.getProductPrice() * cartItem.getQuantity());
         cartItem = cartItemRepository.save(cartItem);
+    }
+
+
+    @Transactional
+    @Override
+    public String createOrUpdateCartWithItems(List<CartItemDTO> cartItems) {
+        // Get user's email
+        String email = authUtil.loggedInEmail();
+        // Check if an existing cart is available or create a new one
+        Cart existingCart = cartRepository.findCartByEmail(email);
+        if(existingCart == null){
+            existingCart = new Cart();
+            existingCart.setTotalPrice(0.0);
+            existingCart.setUser(authUtil.loggedInUser());
+            existingCart = cartRepository.save(existingCart);
+        }else{
+            // Clear all current items in the existing cart
+            cartItemRepository.deleteAllByCartId(existingCart.getCartId());
+        }
+        double totalPrice = 0.00;
+
+        // Process each item in the request to add to the cart
+
+        for (CartItemDTO cartItemDTO : cartItems){
+            Long productId = cartItemDTO.getProductId();
+            Integer quantity = cartItemDTO.getQuantity();
+
+        // Find the product by ID
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+        // Directly update product stock and total price
+//            product.setStock(product.getStock() - quantity);
+            totalPrice += product.getSpecialPrice() * quantity;
+        // Create and save cart item
+            CartItem cartItem = new CartItem();
+            cartItem.setProduct(product);
+            cartItem.setQuantity(quantity);
+            cartItem.setCart(existingCart);
+            cartItem.setProductPrice(product.getSpecialPrice());
+            cartItem.setDiscount(product.getDiscount());
+            cartItemRepository.save(cartItem);
+        }
+        // Update the cart's total price and save
+        existingCart.setTotalPrice(totalPrice);
+        cartRepository.save(existingCart);
+        return "Cart create/updated with the new items successfully";
     }
 
 

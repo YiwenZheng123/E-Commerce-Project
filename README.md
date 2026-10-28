@@ -15,7 +15,7 @@ cd backend
 ```
 
 On macOS or Linux, run `./mvnw spring-boot:run` inside `backend`.
-Configure the backend database and application settings before starting it.
+Set `DB_PASSWORD`, `JWT_SECRET`, and `STRIPE_SECRET_KEY` in your environment before starting the backend. Configure the database connection and image URL in `backend/src/main/resources/application.properties` for your environment.
 
 ## Run the frontend
 

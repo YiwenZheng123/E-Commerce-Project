@@ -10,6 +10,7 @@ const InputField = ({
     min,
     value,
     placeholder,
+    autoComplete,
 }) => {
     return (
         <div className="flex flex-col gap-1 w-full">
@@ -23,6 +24,7 @@ const InputField = ({
                 type={type}
                 id={id}
                 placeholder={placeholder}
+                autoComplete={autoComplete}
                 className={`${
                     className ? className : ""
                 } px-2 py-2 border outline-hidden bg-transparent text-slate-800 rounded-md ${

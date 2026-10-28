@@ -61,7 +61,9 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain FilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.cors(org.springframework.security.config.Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {})
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(
                         session ->
@@ -69,12 +71,17 @@ public class WebSecurityConfig {
                                         SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth ->
-                auth.requestMatchers("/api/auth/**").permitAll()
+                auth.requestMatchers("/api/auth/profile", "/api/auth/profile/avatar", "/api/auth/password", "/api/auth/user").authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-doc/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        //.requestMatchers("/api/public/**").permitAll()
-                        //.requestMatchers("/api/admin/**").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/seller/**").hasAnyRole("ADMIN", "SELLER")
+//                        .requestMatchers("/api/admin/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
+                        .requestMatchers("/images/**").permitAll()
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(),

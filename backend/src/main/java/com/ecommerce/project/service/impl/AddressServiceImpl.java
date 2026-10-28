@@ -7,6 +7,7 @@ import com.ecommerce.project.payload.AddressDTO;
 import com.ecommerce.project.repositories.AddressRepository;
 import com.ecommerce.project.repositories.UserRepository;
 import com.ecommerce.project.service.AddressService;
+import com.ecommerce.project.util.AuthUtil;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +23,12 @@ public class AddressServiceImpl implements AddressService{
     AddressRepository addressRepository;
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    AuthUtil authUtil;
     @Override
     public AddressDTO createAddress(AddressDTO addressDTO, User user) {
         Address address = modelMapper.map(addressDTO, Address.class);
+        address.setAddressId(null);
         List<Address> addressList = user.getAddresses();
         addressList.add(address);
         user.setAddresses(addressList);
@@ -63,6 +67,9 @@ public class AddressServiceImpl implements AddressService{
     public AddressDTO updateAddress(Long addressId, @Valid AddressDTO addressDTO) {
         Address addressFromDb = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+        if (!addressFromDb.getUser().getUserId().equals(authUtil.loggedInUserId())) {
+            throw new ResourceNotFoundException("Address", "addressId", addressId);
+        }
         addressFromDb.setBuildingName(addressDTO.getBuildingName());
         addressFromDb.setCity(addressDTO.getCity());
         addressFromDb.setCountry(addressDTO.getCountry());

@@ -1,6 +1,6 @@
 const initialState = {
     cart: [],
-    totoalPrice:0,
+    totalPrice:0,
     cartId: null,
 }
 
@@ -43,6 +43,21 @@ export const cartReducer = (state = initialState, action) => {
                     (item) => item.productId !== action.payload.productId
                 ),
             };
+            
+        case "GET_USER_CART_PRODUCTS":
+            return {
+                ...state,
+                cart: action.payload,
+                totalPrice:action.totalPrice,
+                cartId:action.cartId,
+            }
+        case "CLEAR_CART":
+            return {
+                ...state,
+                cart: [],
+                totalPrice:0,
+                cartId:null,
+            }
         default:
             return state;
     }

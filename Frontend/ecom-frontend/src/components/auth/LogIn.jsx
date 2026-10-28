@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { AiOutlineLogin } from "react-icons/ai";
+import { FiArrowLeft, FiShoppingBag } from "react-icons/fi";
 import { useNavigate } from "react-router-dom"
 import InputField from "../shared/InputField";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { authenticateSignInUser } from "../../store/actions";
 import toast from "react-hot-toast";
+import  Spinners  from "../shared/Spinners";
 
 const LogIn = () => {
     const navigate = useNavigate();
@@ -27,26 +28,35 @@ const LogIn = () => {
         dispatch(authenticateSignInUser(data, toast, reset, navigate, setLoader));
     }
     return (
-        <div className="min-h-[calc(100vh-64px)] flex justify-center items-center">
+        <main className="min-h-[calc(100dvh-70px)] bg-slate-50 px-4 py-10 sm:py-16">
+          <div className="mx-auto w-full max-w-[440px]">
+            <Link to="/products" className="mb-7 inline-flex min-h-11 items-center gap-2 rounded text-sm text-slate-600 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
+                <FiArrowLeft aria-hidden="true" /> Back to shopping
+            </Link>
+            <section className="rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-9 sm:py-10" aria-labelledby="sign-in-heading">
             <form
                 onSubmit={handleSubmit(loginHandler)}
-                className="sm:w-[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded-md"
+                aria-busy={loader}
+                className="[&_input]:min-h-12 [&_input]:bg-white [&_input]:px-3 [&_input]:text-base [&_input]:transition-shadow [&_input:focus]:outline-2 [&_input:focus]:outline-offset-2 [&_input:focus]:outline-blue-600 [&_label]:mb-1"
             >
-                <div className="flex flex-col items-center justify-center space-y-4">
-                    <AiOutlineLogin className="text-slate-800 text-5xl"/>
-                    <h1 className="text-slate-800 text-center font-montserrat lg:text-3xl text-2xl font-bold">
-                        Login Here
+                <div className="mb-8">
+                    <div className="mb-6 flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-800">
+                        <FiShoppingBag aria-hidden="true" className="text-xl" /> E-Shop
+                    </div>
+                    <h1 id="sign-in-heading" className="text-3xl font-semibold tracking-tight text-slate-900">
+                        Welcome back
                     </h1>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to continue shopping.</p>
                 </div>
-            <hr className="mt-2 mb-5 text-black"></hr>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-5">
                 <InputField 
-                    label="UserName"
+                    label="Username"
                     required
                     id="username"
                     type="text"
+                    autoComplete="username"
                     message="*Username is Required"
-                    placeholder="Please enter your username"
+                    placeholder="Enter your username"
                     register={register}
                     errors={errors}
                 />
@@ -55,8 +65,9 @@ const LogIn = () => {
                     required
                     id="password"
                     type="password"
+                    autoComplete="current-password"
                     message="*Password is Required"
-                    placeholder="Please enter your password"
+                    placeholder="Enter your password"
                     register={register}
                     errors={errors}
                 />
@@ -64,28 +75,31 @@ const LogIn = () => {
 
             <button
                 disabled={loader}
-                className="bg-button-gradient flex gap-2 items-center justify-center font-semibold text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-xs mt-6 mb-3"
+                className="mt-7 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-700 active:bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-60"
                 type="submit"
             >
                 {loader ? (
-                    <>Loading...</>
+                    <>
+                    <Spinners/>Signing in...
+                    </>
                 ): (
-                    <>Login</>
+                    <>Sign in</>
                 )}
 
             </button>
-            <p className="text-center text-sm text-slate-700 mt-6">
-                Don't have an account?
+            </form>
+            <div className="mt-8 border-t border-slate-200 pt-6 text-center">
+                <p className="mb-4 text-sm text-slate-500">New to E-Shop?</p>
                 <Link
-                    className="font-semibold underline hover:text-black"
+                    className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-500 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
                     to="/register">
-                    <span> SignUp</span>
+                    Create an account
                 </Link>  
                 
-            </p>
-            </form>
-            
-        </div>
+            </div>
+            </section>
+          </div>
+        </main>
     )
 }
 

@@ -11,6 +11,15 @@ import { Toaster } from 'react-hot-toast'
 import LogIn from './components/auth/LogIn'
 import PrivateRoute from './components/PrivateRoute'
 import Register from './components/auth/Register'
+import CheckOut from './components/checkout/CheckOut'
+import PaymentConfirmation from './components/checkout/PaymentConfirmation'
+import AdminLayout from './components/admin/AdminLayout'
+import Dashboard from './components/admin/dashboard/Dashboard'
+import Category from './components/admin/categories/Category'
+import Sellers from './components/admin/sellers/Sellers'
+import AdminProducts from './components/admin/products/AdminProducts'
+import Orders from './components/admin/orders/Orders'
+import Profile from './components/profile/Profile'
 
 
 function App() {
@@ -27,10 +36,26 @@ function App() {
         <Route path='/products' element={ <Products /> }/>
         <Route path='/contact' element={ <Contact /> }/>
         <Route path='/cart' element={ <Cart /> }/>
-        <Route path='/' element={ <PrivateRoute publicPage/>}>
+        
+        <Route element={ <PrivateRoute />}>
+          <Route path='/profile' element={ <Profile /> }/>
+          <Route path='/checkout' element={ <CheckOut /> }/>
+          <Route path='/order-confirm' element={ <PaymentConfirmation /> }/>
+        </Route>
+
+        <Route element={ <PrivateRoute publicPage/>}>
           <Route path='/login' element={ <LogIn /> }/>
           <Route path='/register' element={ <Register /> }/>
+        </Route>
 
+        <Route element={ <PrivateRoute adminOnly/>}>
+          <Route path='/admin' element={ <AdminLayout /> }>
+            <Route path='' element={ <Dashboard /> }/>
+            <Route path='products' element={ <AdminProducts /> }/>
+            <Route path='orders' element={ <Orders /> }/>
+            <Route path='categories' element={ <Category /> }/>
+            <Route path='sellers' element={ <Sellers /> }/>
+          </Route>
         </Route>
       </Routes>
     </Router>

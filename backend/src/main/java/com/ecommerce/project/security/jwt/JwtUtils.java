@@ -47,11 +47,12 @@ public class JwtUtils {
     }
 
     public ResponseCookie generateJwtCookie(UserDetailsImpl userPrinciple){
-        String jwt = generateTokenFromUsername(userPrinciple.getUsername());
+        String jwt = generateTokenFromUsername(userPrinciple);
         ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt)
                 .path("/api")
                 .maxAge(24*60*60)
                 .httpOnly(false)
+                .secure(false)
                 .build();
         return cookie;
     }
@@ -59,13 +60,16 @@ public class JwtUtils {
     public ResponseCookie getCleanJwtCookie(){
         ResponseCookie cookie = ResponseCookie.from(jwtCookie, null)
                 .path("/api")
+                .maxAge(0)
                 .build();
         return cookie;
     }
 
-    public String generateTokenFromUsername(String username) {
+    public String generateTokenFromUsername(UserDetailsImpl userDetails) {
         return Jwts.builder()
-                .subject(username)
+                .subject(userDetails.getUsername())
+                .claim("userId", userDetails.getId())
+                .claim("authVersion", userDetails.getAuthVersion())
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key())
@@ -77,6 +81,13 @@ public class JwtUtils {
                         .verifyWith((SecretKey) key())
                 .build().parseSignedClaims(token)
                 .getPayload().getSubject();
+    }
+
+    public boolean matchesUser(String token, UserDetailsImpl userDetails) {
+        Claims claims = Jwts.parser().verifyWith((SecretKey) key())
+                .build().parseSignedClaims(token).getPayload();
+        return userDetails.getId().equals(claims.get("userId", Long.class))
+                && Integer.valueOf(userDetails.getAuthVersion()).equals(claims.get("authVersion", Integer.class));
     }
 
     private Key key() {

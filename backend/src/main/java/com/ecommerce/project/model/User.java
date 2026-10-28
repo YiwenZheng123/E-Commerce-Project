@@ -41,6 +41,11 @@ public class User {
     @Column(name = "password")
     private String password;
 
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int authVersion;
+
+    private String avatar;
+
     public User(String userName, String email, String password) {
         this.userName = userName;
         this.email = email;

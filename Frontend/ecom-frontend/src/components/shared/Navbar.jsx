@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { FaShoppingCart, FaSignInAlt, FaStore } from "react-icons/fa";
+import { FaShoppingCart, FaStore } from "react-icons/fa";
+import { FiUser } from "react-icons/fi";
 import { useLocation } from "react-router-dom"; // Import useLocation hook
 import { Badge } from "@mui/material";
 import { useState } from "react";
@@ -86,14 +87,16 @@ const Navbar = () => {
               </li>
             ) : (
               <li className="font-medium transition-all duration-150">
-                <Link className="flex items-center space-x-2 px-4 py-[6px] 
-                            bg-linear-to-r from-purple-600 to-red-500 
-                            text-white font-semibold rounded-md shadow-lg 
-                            hover:from-purple-500 hover:to-red-400 transition 
-                            duration-300 ease-in-out transform "
+                <Link className="inline-flex min-h-11 items-center gap-2.5 rounded-md border border-transparent
+                            px-3 py-1.5 text-slate-100 hover:border-slate-500 hover:bg-white/5
+                            active:bg-white/10 transition-colors duration-150
+                            focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     to="/login">
-                    <FaSignInAlt/>
-                    <span>Login</span>
+                    <FiUser aria-hidden="true" className="shrink-0 text-2xl" />
+                    <span className="flex flex-col items-start leading-tight">
+                        <span className="text-xs font-normal text-slate-300">Welcome</span>
+                        <span className="text-sm font-semibold">Sign in</span>
+                    </span>
                 </Link>
               </li>
 

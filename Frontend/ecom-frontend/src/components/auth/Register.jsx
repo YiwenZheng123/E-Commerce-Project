@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom"
 import InputField from "../shared/InputField";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaUserPlus } from "react-icons/fa";
+import { FiArrowLeft, FiShoppingBag } from "react-icons/fi";
 import { useDispatch } from "react-redux";
 import { registerNewUser } from "../../store/actions";
+import  Spinners  from "../shared/Spinners";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -28,26 +29,35 @@ const Register = () => {
         
     }
     return (
-        <div className="min-h-[calc(100vh-64px)] flex justify-center items-center">
+        <main className="min-h-[calc(100dvh-70px)] bg-slate-50 px-4 py-10 sm:py-16">
+          <div className="mx-auto w-full max-w-[440px]">
+            <Link to="/products" className="mb-7 inline-flex min-h-11 items-center gap-2 rounded text-sm text-slate-600 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600">
+                <FiArrowLeft aria-hidden="true" /> Back to shopping
+            </Link>
+            <section className="rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-9 sm:py-10" aria-labelledby="register-heading">
             <form
                 onSubmit={handleSubmit(RegisterHandler)}
-                className="sm:w-[450px] w-[360px] shadow-custom py-8 sm:px-8 px-4 rounded-md"
+                aria-busy={loader}
+                className="[&_input]:min-h-12 [&_input]:bg-white [&_input]:px-3 [&_input]:text-base [&_input]:transition-shadow [&_input:focus]:outline-2 [&_input:focus]:outline-offset-2 [&_input:focus]:outline-blue-600 [&_label]:mb-1"
             >
-                <div className="flex flex-col items-center justify-center space-y-4">
-                    <FaUserPlus className="text-slate-800 text-5xl"/>
-                    <h1 className="text-slate-800 text-center font-montserrat lg:text-3xl text-2xl font-bold">
-                        Register
+                <div className="mb-8">
+                    <div className="mb-6 flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-800">
+                        <FiShoppingBag aria-hidden="true" className="text-xl" /> E-Shop
+                    </div>
+                    <h1 id="register-heading" className="text-3xl font-semibold tracking-tight text-slate-900">
+                        Create an account
                     </h1>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">Your next great find starts here.</p>
                 </div>
-            <hr className="mt-2 mb-5 text-black"></hr>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-5">
                 <InputField 
-                    label="UserName"
+                    label="Username"
                     required
                     id="username"
+                    autoComplete="username"
                     type="text"
                     message="*Username is Required"
-                    placeholder="Please enter your username"
+                    placeholder="Choose a username"
                     register={register}
                     errors={errors}
                 />
@@ -55,10 +65,11 @@ const Register = () => {
                     label="Email"
                     required
                     id="email"
+                    autoComplete="email"
                     min={6}
                     type="email"
                     message="*Email is Required"
-                    placeholder="Please enter your email"
+                    placeholder="Enter your email address"
                     register={register}
                     errors={errors}
                 />
@@ -66,9 +77,10 @@ const Register = () => {
                     label="Password"
                     required
                     id="password"
+                    autoComplete="new-password"
                     type="password"
                     message="*Password is Required"
-                    placeholder="Please enter your password"
+                    placeholder="Create a password"
                     register={register}
                     errors={errors}
                 />
@@ -76,27 +88,29 @@ const Register = () => {
 
             <button
                 disabled={loader}
-                className="bg-button-gradient flex gap-2 items-center justify-center font-semibold text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-xs my-3"
+                className="mt-7 flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-700 active:bg-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600 disabled:cursor-wait disabled:opacity-60"
                 type="submit">
                 {loader ? (
                     <>
-                     Loading...
+                     <Spinners/>Creating account...
                     </>
                 ) : (
-                    <>Register</>
+                    <>Create account</>
                 )}
             </button>
 
-            <p className="text-center text-sm text-slate-700 mt-6">
-              Already have an account?
-              <Link
-                className="font-semibold underline hover:text-black"
-                to="/login">
-              <span> Login</span></Link>  
-            </p>
             </form>
-            
-        </div>
+            <div className="mt-8 border-t border-slate-200 pt-6 text-center">
+              <p className="mb-4 text-sm text-slate-500">Already have an account?</p>
+              <Link
+                className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-500 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                to="/login">
+                Sign in
+              </Link>
+            </div>
+            </section>
+          </div>
+        </main>
     )
 }
 
