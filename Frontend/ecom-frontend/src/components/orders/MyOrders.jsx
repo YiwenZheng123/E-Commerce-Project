@@ -16,17 +16,14 @@ const MyOrders = () => {
     const listUrl = `/profile/orders${page ? `?page=${encodeURIComponent(page)}` : ""}`;
     const button = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
+    const pageNumber = page === null ? null : Number(page);
+    const pageInvalid = page !== null && (!Number.isSafeInteger(pageNumber) || pageNumber < 1);
+
     useEffect(() => {
+        if (pageInvalid) return;
         const controller = new AbortController();
         const query = new URLSearchParams();
-        if (page !== null) {
-            const number = Number(page);
-            if (!Number.isSafeInteger(number) || number < 1) {
-                setResult({ key, data: null, error: "Invalid page number. Return to your orders to start again." });
-                return;
-            }
-            query.set("pageNumber", String(number - 1));
-        }
+        if (pageNumber !== null) query.set("pageNumber", String(pageNumber - 1));
         api.get(orderId ? `/orders/${orderId}` : `/orders?${query}`, { signal: controller.signal })
             .then(({ data }) => setResult({ key, data, error: "" }))
             .catch(error => {
@@ -37,10 +34,11 @@ const MyOrders = () => {
                     : "We could not load your orders. Please try again." });
             });
         return () => controller.abort();
-    }, [key, orderId, page]);
+    }, [key, orderId, pageNumber, pageInvalid]);
 
-    const loading = result.key !== key;
+    const loading = !pageInvalid && result.key !== key;
     const data = result.data;
+    const error = pageInvalid ? "Invalid page number. Return to your orders to start again." : result.error;
     return (
         <main className="min-h-[calc(100vh-70px)] bg-slate-50 px-4 py-10 sm:px-8">
             <div className="mx-auto max-w-5xl">
@@ -53,8 +51,8 @@ const MyOrders = () => {
                     <p className="mt-2 text-slate-600">{orderId ? "Your purchase details, all in one place." : "Your purchases, from the latest to the first."}</p>
                 </div>
                 {loading ? <div role="status" className="rounded-2xl border border-slate-200 bg-white p-8 text-slate-600">Loading your orders…</div>
-                    : result.error ? <div role="alert" className="rounded-2xl border border-red-200 bg-white p-8">
-                        <p className="mb-4 text-red-700">{result.error}</p>
+                    : error ? <div role="alert" className="rounded-2xl border border-red-200 bg-white p-8">
+                        <p className="mb-4 text-red-700">{error}</p>
                         <button className={button} onClick={() => setAttempt(attempt + 1)}>Try again</button>
                         <Link to="/profile/orders" className={`${button} ml-3`}>All orders</Link>
                     </div>

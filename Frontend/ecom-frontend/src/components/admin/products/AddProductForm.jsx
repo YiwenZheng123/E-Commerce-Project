@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import InputField from '../../shared/InputField'
 import { Button } from '@mui/material'
@@ -40,7 +40,7 @@ const AddProductForm = ({ setOpen, product, update = false }) => {
 
         }
 
-    }, [update, product]);
+    }, [update, product, setValue]);
 
     useEffect(() => {
         if (!update) {

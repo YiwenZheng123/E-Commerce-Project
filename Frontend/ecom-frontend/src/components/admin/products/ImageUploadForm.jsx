@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { FaCloudUploadAlt } from 'react-icons/fa'
 import { Button } from '@mui/material'
 import Spinners from '../../shared/Spinners'

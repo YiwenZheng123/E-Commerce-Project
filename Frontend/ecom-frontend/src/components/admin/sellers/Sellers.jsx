@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { MdAddShoppingCart } from 'react-icons/md';
 import { useSelector } from 'react-redux';
 import Loader from '../../shared/Loader';
@@ -9,8 +9,6 @@ import { adminSellerTableColumn } from '../../helper/tableColumn';
 import  useSellerFilter  from '../../../hooks/useSellerFilter';
 import Modal from '../../shared/Modal';
 import AddSellerForm from '../sellers/AddSellerForm';
-import { useDispatch } from 'react-redux';
-import { toast } from 'react-hot-toast';
 
 
 
@@ -20,13 +18,11 @@ const Sellers = () => {
   const [currentPage, setCurrentPage] = useState(
     pagination?.pageNumber + 1 || 1
   );
-  const dispatch = useDispatch();
   useSellerFilter();
 
 
   const [openAddModal, setOpenAddModal] = useState(false);
-  const [loader, setLoader] = useState(false);
-  const { isLoading, errorMessage } = useSelector((state) => state.errors);
+  const { isLoading } = useSelector((state) => state.errors);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const params = new URLSearchParams(searchParams);

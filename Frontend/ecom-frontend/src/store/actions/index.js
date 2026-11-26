@@ -165,7 +165,7 @@ export const authenticateSignInUser
     }
 
 export const registerNewUser
-    = (sendData, toast, reset, navigate, setLoader, returnToCart = false) => async (dispatch) => {
+    = (sendData, toast, reset, navigate, setLoader, returnToCart = false) => async () => {
         try {
             setLoader(true);
             const { data } = await api.post(`/auth/signup`, sendData);
@@ -191,7 +191,7 @@ export const logOutUser = (navigate) => async (dispatch, getState) => {
         await api.post("/auth/signout");
         clearSession(dispatch);
         navigate("/login");
-    } catch (error) {
+    } catch {
         notifications.error("Could not sign out. Please try again.");
     }
 };
@@ -287,7 +287,7 @@ export const addUpdateUserAddress =
     }
 
 
-export const getUserAddresses = () => async (dispatch, getState) => {
+export const getUserAddresses = () => async (dispatch) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         const { data } = await api.get(`/users/addresses`);
@@ -312,7 +312,7 @@ export const selectUserCheckoutAddress = (address) => {
 }
 
 export const deleteUserAddress =
-    (toast, addressId, setOpenDeleteModal) => async (dispatch, getState) => {
+    (toast, addressId, setOpenDeleteModal) => async (dispatch) => {
         try {
             dispatch({ type: "BUTTON_LOADER" })
             await api.delete(`/addresses/${addressId}`);
@@ -345,7 +345,7 @@ export const addPaymentMethod = (method) => {
     }
 }
 
-export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
+export const createUserCart = (sendCartItems) => async (dispatch) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         await api.post(`/carts/create`, sendCartItems);
@@ -477,7 +477,7 @@ export const updateOrderStatusFromDashboard =
             const { data } = await api.put(`/admin/orders/${orderId}/status`, { status: orderStatus });
             toast.success(data.message || "Order updated successfully");
             const { pageNumber, pageSize } = getState().order.pagination;
-            await dispatch(getDashboardOrders(`pageNumber=${pageNumber}&pageSize=${pageSize}`));
+            await dispatch(getDashboardOrders(`pageNumber=${pageNumber}&pageSize=${pageSize}`, isAdmin));
             dispatch({ type: "IS_SUCCESS" });
             return true;
 
@@ -540,7 +540,7 @@ export const updateAdminProductsFromDashboard = (sendData, toast, reset, setLoad
         }
     }
 export const addNewProductFromDashboard = (sendData, toast, reset, setLoader, setOpen, isAdmin) =>
-    async (dispatch, getState) => {
+    async (dispatch) => {
         try {
             setLoader(true);
             const endpoint = isAdmin ? "/admin/categories" : "/seller/categories";

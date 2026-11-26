@@ -1,5 +1,3 @@
-import React from 'react'
-
 const Spinners = () => {
   return (
 <div role="status">

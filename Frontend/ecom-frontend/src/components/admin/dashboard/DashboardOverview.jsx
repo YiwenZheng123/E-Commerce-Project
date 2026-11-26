@@ -1,4 +1,3 @@
-import React from 'react'
 import { formatRevenue } from '../../../utils/formatPrice';
 
 const DashboardOverview = ({ title, amount, Icon, revenue = false }) => {

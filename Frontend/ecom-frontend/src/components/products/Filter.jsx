@@ -10,8 +10,14 @@ const Filter = ({categories}) => {
     const sortOrder = searchParams.get("sortBy") || "asc";
     const keyword = searchParams.get("keyword") || "";
     const [searchTerm, setSearchTerm] = useState(keyword);
+    const [prevKeyword, setPrevKeyword] = useState(keyword);
 
-    useEffect(() => { setSearchTerm(keyword); }, [keyword]);
+    // Keep the input in sync when the URL keyword changes (e.g. back button or "clear").
+    // Adjusting state during render avoids the extra render pass an effect would cause.
+    if (keyword !== prevKeyword) {
+        setPrevKeyword(keyword);
+        setSearchTerm(keyword);
+    }
     useEffect(() => {
         if (searchTerm === keyword) return;
         const handler = setTimeout(() => {

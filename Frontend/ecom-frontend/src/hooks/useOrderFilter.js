@@ -9,7 +9,6 @@ const useOrderFilter = () => {
     
     const { user } = useSelector((state) => state.auth);
     const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
-    // const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
 
     useEffect(() => {
         const params = new URLSearchParams();
@@ -25,7 +24,7 @@ const useOrderFilter = () => {
         
         dispatch(getDashboardOrders(queryString, isAdmin));
 
-    }, [dispatch, searchParams]);
+    }, [dispatch, searchParams, isAdmin]);
 };
 
 export default useOrderFilter;

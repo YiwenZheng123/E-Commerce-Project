@@ -5,7 +5,6 @@ import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js'
 import { Alert, Button } from '@mui/material'
 import api from '../../api/api'
 import { getUserCart } from '../../store/actions'
-import toast from 'react-hot-toast'
 
 const PaypalPayment = () => {
     const dispatch = useDispatch();

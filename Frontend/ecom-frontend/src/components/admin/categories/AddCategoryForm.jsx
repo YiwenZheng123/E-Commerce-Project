@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import InputField from '../../shared/InputField'
 import { Button } from '@mui/material'
@@ -21,8 +21,8 @@ const AddCategoryForm = ({ setOpen, category, update = false }) => {
         mode: "onTouched"
     })
     const dispatch = useDispatch();
+    // The modal unmounts this form when it closes, so submitError starts empty on every open.
     useEffect(() => {
-        setSubmitError("");
         reset({
             categoryName: update ? category?.categoryName ?? "" : "",
         });
