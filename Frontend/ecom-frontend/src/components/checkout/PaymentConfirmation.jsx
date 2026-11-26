@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { Skeleton } from '@mui/material'
@@ -12,19 +12,22 @@ const PaymentConfirmation = () => {
     const loaction = useLocation();
     const searchParams = new URLSearchParams(loaction.search);
     const dispatch = useDispatch();
-    const [errorMessage, setErrorMessage] = useState("");
-    const [order, setOrder] = useState(null);
-    const [loading, setLoading] = useState(true);
-
     const paymentIntent = searchParams.get("payment_intent");
     const orderId = searchParams.get("orderId");
     const clientSecret = searchParams.get("payment_intent_client_secret");
     const redirectStatus = searchParams.get("redirect_status");
-    const selectedUserCheckoutAddress = localStorage.getItem("CHECKOUT_ADDRESS")
-        ? JSON.parse(localStorage.getItem("CHECKOUT_ADDRESS"))
-        : [];
+    const stripeSucceeded = Boolean(paymentIntent && clientSecret && redirectStatus === "succeeded");
+    const nothingToConfirm = !stripeSucceeded && !orderId;
+
+    const [errorMessage, setErrorMessage] = useState(
+        nothingToConfirm ? "Payment was not completed. Your cart has been kept." : "");
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(!nothingToConfirm);
 
     useEffect(() => {
+        const selectedUserCheckoutAddress = localStorage.getItem("CHECKOUT_ADDRESS")
+            ? JSON.parse(localStorage.getItem("CHECKOUT_ADDRESS"))
+            : [];
         const sendData = {
             addressId: selectedUserCheckoutAddress.addressId,
             pgName: "Stripe",
@@ -35,18 +38,15 @@ const PaymentConfirmation = () => {
 
         if (submitted.current) return;
         submitted.current = true;
-        if (paymentIntent && clientSecret && redirectStatus === "succeeded") {
+        if (stripeSucceeded) {
             dispatch(stripePaymentConfirmation(sendData, setErrorMessage, setLoading, toast)).then(setOrder);
         } else if (orderId) {
             api.get(`/orders/${encodeURIComponent(orderId)}`)
                 .then(({ data }) => setOrder(data))
                 .catch(() => setErrorMessage("Could not load your order. Please check My Orders. Do not pay again."))
                 .finally(() => setLoading(false));
-        } else {
-            setErrorMessage("Payment was not completed. Your cart has been kept.");
-            setLoading(false);
         }
-    }, [paymentIntent, clientSecret, redirectStatus, orderId, dispatch])
+    }, [stripeSucceeded, paymentIntent, orderId, dispatch])
 
     const attention = order?.orderStatus === "Paid, needs attention";
 

@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React from 'react'
 import './App.css'
 import Products from './components/products/Products'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
@@ -24,7 +24,6 @@ import MyOrders from './components/orders/MyOrders'
 
 
 function App() {
-  const[count, setCount] = useState(0)
   
 
   return (

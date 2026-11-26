@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router-dom';
 import { Step, StepLabel, Stepper } from '@mui/material';
-import React from 'react'
 import { useState } from 'react';
 import AddressInfo from './AddressInfo';
 import { useDispatch, useSelector } from 'react-redux';

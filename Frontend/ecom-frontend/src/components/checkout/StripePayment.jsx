@@ -1,6 +1,5 @@
-import { Alert, AlertTitle, Skeleton } from '@mui/material'
+import { Skeleton } from '@mui/material'
 import { loadStripe } from '@stripe/stripe-js'
-import React from 'react'
 import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
 import PaymentForm from './PaymentForm';
@@ -37,6 +36,9 @@ const StripePayment = () => {
       dispatch(createStripePaymentSecret(sendData, toast))
     }
 
+  // Request exactly one PaymentIntent per checkout. Adding the order fields as dependencies could
+  // create a second intent if any of them change while the first request is in flight.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientSecret]);
 
   if (isLoading) {

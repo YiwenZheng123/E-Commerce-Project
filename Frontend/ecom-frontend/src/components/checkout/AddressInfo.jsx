@@ -1,5 +1,4 @@
 import { FaAddressBook } from 'react-icons/fa';
-import React from 'react'
 import Skeleton from '../shared/Skeleton';
 import { useState } from 'react';
 import AddressInfoModal from './AddressInfoModal';

@@ -1,4 +1,3 @@
-import React from 'react'
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom'
 import { FaTachometerAlt } from "react-icons/fa";
@@ -6,7 +5,7 @@ import { adminNavigation, sellerNavigation } from '../../utils';
 import classNames from 'classnames';
 
 
-const Sidebar = (isProfileLayout = false) => {
+const Sidebar = () => {
   const pathName = useLocation().pathname;
   const { user } = useSelector((state) => state.auth);
   const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");

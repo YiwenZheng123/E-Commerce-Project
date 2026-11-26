@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { FormControl, FormControlLabel, Radio, RadioGroup } from '@mui/material'
 import { useSelector } from 'react-redux'
 import { useDispatch } from 'react-redux'
@@ -6,7 +6,7 @@ import { addPaymentMethod, createUserCart } from '../../store/actions'
 const PaymentMethod = () => {
     const {paymentMethod} = useSelector((state) => state.payment);
     const {cart, cartId} = useSelector((state) => state.carts);
-    const {isLoading, errorMessage} = useSelector((state) => state.errors);
+    const {errorMessage} = useSelector((state) => state.errors);
     const dispatch = useDispatch();
     useEffect(() => {
         if (cart.length > 0 && !cartId && !errorMessage){
@@ -20,6 +20,9 @@ const PaymentMethod = () => {
             dispatch(createUserCart(sendCartItems))
         }
 
+    // Create the cart once when checkout starts. Re-running on every cart or error change could
+    // fire duplicate create requests while the first one is still in flight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dispatch, cartId])
     const paymentMethodHandler = (method) => {
         dispatch(addPaymentMethod(method));

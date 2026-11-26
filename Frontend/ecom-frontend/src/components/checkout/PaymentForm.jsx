@@ -1,6 +1,6 @@
 import { Skeleton } from '@mui/material';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
-import React, { useState } from 'react'
+import { useState } from 'react'
 
 
 const PaymentForm = ({clientSecret, totalPrice}) => {
@@ -14,6 +14,10 @@ const PaymentForm = ({clientSecret, totalPrice}) => {
         if(!stripe || !elements) return;
 
         const {error: submitError}= await elements.submit();
+        if(submitError){
+            setErrorMessage(submitError.message);
+            return false;
+        }
         const {error} = await stripe.confirmPayment({
             elements,
             clientSecret,

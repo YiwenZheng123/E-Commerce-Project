@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import InputField from '../shared/InputField'
 import { useForm } from 'react-hook-form';
 import { FiMapPin } from 'react-icons/fi';
@@ -14,7 +14,6 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
     const {
         register,
         handleSubmit,
-        reset,
         setValue,
         formState: { errors },
     } = useForm({
@@ -42,7 +41,7 @@ const AddAddressForm = ({ address, setOpenAddressModal }) => {
             setValue("pincode", address?.pincode);
             setValue("country", address?.country);
         }
-    }, [address])
+    }, [address, setValue])
     return (
         <div className="">
             <form
