@@ -11,6 +11,25 @@ jobs:
         defaults:
             run:
                 working-directory: backend
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: ecommerce
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd "pg_isready -U portgres"
+                    --health-interval 5s
+                    --health-timeout 5s
+                    --health-retries 10
+        env:
+            DB_PASSWORD: postgres
+            JWT_SECRET: Y2ktb25seS1kdW1teS1qd3Qtc2VjcmV0LWtleS1ub3QtZm9yLXByb2R1Y3Rpb24=
+            STRIPE_SECRET_KEY: sk_test_ci_placeholder
+            
         steps:
             - name: Check out code
               uses: actions/checkout@v4
