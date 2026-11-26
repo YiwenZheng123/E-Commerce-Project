@@ -69,7 +69,7 @@ class SbEcomApplicationTests {
 		mockMvc.perform(post("/api/admin/categories")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"categoryName\":\"" + categoryName + "\"}"))
-				.andExpect(status().isOk())
+				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.categoryName").value(categoryName))
 				.andExpect(jsonPath("$.categoryId").isNumber());
 	}
