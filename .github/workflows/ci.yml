@@ -6,10 +6,20 @@ on:
     pull_request:
         branches: [main]
     workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+    contents: read
+
 jobs:
     backend:
         name: Backend tests
         runs-on: ubuntu-latest
+        timeout-minutes: 10
+
         defaults:
             run:
                 working-directory: backend
@@ -48,10 +58,24 @@ jobs:
             - name: Run tests
               run: ./mvnw -B verify 
 
+            - name: Upload test reports
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                name: surefire-reports
+                path: backend/target/surefire-reports
+            
+            - name: Upload jar
+              uses: actions/upload-artifact@v4
+              with:
+                name: sb-ecom-jar
+                path: backend/target/*.jar
+
 
     frontend:
             name: Frontend (lint + test + build)
             runs-on: ubuntu-latest
+            timeout-minutes: 15
 
             defaults:
                 run:
@@ -84,3 +108,9 @@ jobs:
                   run: npm run build
                   env:
                     VITE_BACK_END_URL: http://localhost:8080
+                
+                - name: Upload dist
+                  uses: actions/upload-artifact@v4
+                  with:
+                    name: frontend-dist
+                    path: Frontend/ecom-frontend/dist/
