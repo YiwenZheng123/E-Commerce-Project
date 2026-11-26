@@ -9,6 +9,7 @@ import com.ecommerce.project.security.jwt.AuthEntryPointJwt;
 import com.ecommerce.project.security.jwt.AuthTokenFilter;
 import com.ecommerce.project.security.services.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,10 +73,13 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests(auth ->
                 auth.requestMatchers("/api/auth/profile", "/api/auth/profile/avatar", "/api/auth/password", "/api/auth/user").authenticated()
+                        .requestMatchers("/api/auth/sellers").hasRole("ADMIN")
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-doc/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/carts").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.PUT, "/api/seller/orders/*/status").denyAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/seller/**").hasAnyRole("ADMIN", "SELLER")
 //                        .requestMatchers("/api/admin/**").permitAll()
@@ -104,7 +108,8 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public CommandLineRunner initData(RoleRepository roleRepository, UserRepository userRepository){
+    public CommandLineRunner initData(RoleRepository roleRepository, UserRepository userRepository,
+                                     @Value("${app.seed-demo-users:true}") boolean seedDemoUsers){
         return args -> {
             Role userRole = roleRepository
                     .findByRoleName(AppRole.ROLE_USER)
@@ -126,6 +131,8 @@ public class WebSecurityConfig {
                         Role newUserRole = new Role(AppRole.ROLE_SELLER);
                         return roleRepository.save(newUserRole);
                     });
+
+            if (!seedDemoUsers) return;
 
             Set<Role> userRoles = Set.of(userRole);
             Set<Role> adminRoles = Set.of(adminRole);

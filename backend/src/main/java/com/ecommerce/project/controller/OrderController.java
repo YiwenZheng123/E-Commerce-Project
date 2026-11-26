@@ -30,7 +30,7 @@ public class OrderController {
 
     @PostMapping("/order/paypal")
     public ResponseEntity<Map<String, String>> createPayPalOrder(@Valid @RequestBody PayPalCheckoutRequest request) {
-        return ResponseEntity.ok(Map.of("id", payPalService.createOrder(request.getAddressId())));
+        return ResponseEntity.ok(Map.of("id", payPalService.createOrder(request.getAddressId(), request.getProductIds())));
     }
 
     @PostMapping("/order/paypal/{paypalOrderId}/capture")
@@ -63,6 +63,21 @@ public class OrderController {
 
     }
 
+    @GetMapping("/orders")
+    public ResponseEntity<OrderResponse> getMyOrders(
+            @RequestParam(defaultValue = AppConstants.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(defaultValue = AppConstants.PAGE_SIZE) Integer pageSize) {
+        if (pageNumber < 0 || pageSize < 1 || pageSize > 100) {
+            throw new com.ecommerce.project.exceptions.APIException("Invalid pagination: pageNumber must be nonnegative and pageSize must be between 1 and 100");
+        }
+        return ResponseEntity.ok(orderService.getMyOrders(pageNumber, pageSize));
+    }
+
+    @GetMapping("/orders/{orderId}")
+    public ResponseEntity<OrderDTO> getMyOrder(@PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.getMyOrder(orderId));
+    }
+
     @GetMapping("/admin/orders")
     public ResponseEntity<OrderResponse> getAllOrders(@RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
                                                       @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
@@ -83,16 +98,7 @@ public class OrderController {
 
     @PutMapping("/admin/orders/{orderId}/status")
     public ResponseEntity<OrderDTO> updateOrderStatus(@PathVariable Long orderId,
-                                                      @RequestBody OrderStatusUpdateDTO orderStatusUpdateDTO) {
-//        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-//        String email = userDetails.getEmail();
-        OrderDTO order = orderService.updateOrder(orderId, orderStatusUpdateDTO.getStatus());
-        return new ResponseEntity<OrderDTO>(order, HttpStatus.OK);
-
-    }
-    @PutMapping("/seller/orders/{orderId}/status")
-    public ResponseEntity<OrderDTO> updateOrderStatusSeller(@PathVariable Long orderId,
-                                                      @RequestBody OrderStatusUpdateDTO orderStatusUpdateDTO) {
+                                                      @Valid @RequestBody OrderStatusUpdateDTO orderStatusUpdateDTO) {
 //        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 //        String email = userDetails.getEmail();
         OrderDTO order = orderService.updateOrder(orderId, orderStatusUpdateDTO.getStatus());

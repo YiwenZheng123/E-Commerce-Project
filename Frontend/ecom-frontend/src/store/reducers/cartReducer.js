@@ -1,11 +1,19 @@
 const initialState = {
+    selectedIds: [],
     cart: [],
     totalPrice:0,
     cartId: null,
+    isSaving: false,
 }
 
 export const cartReducer = (state = initialState, action) => {
     switch (action.type) {
+        case "SELECT_CART_ITEMS":
+            return { ...state, selectedIds: action.payload };
+        case "LOG_OUT":
+            return initialState;
+        case "CART_SAVING":
+            return { ...state, isSaving: action.payload };
         case "ADD_CART":
             { const productToAdd = action.payload;
             const existingProduct = state.cart.find(
@@ -54,7 +62,8 @@ export const cartReducer = (state = initialState, action) => {
         case "CLEAR_CART":
             return {
                 ...state,
-                cart: [],
+                selectedIds: [],
+    cart: [],
                 totalPrice:0,
                 cartId:null,
             }

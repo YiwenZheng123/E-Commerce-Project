@@ -5,6 +5,7 @@ import lombok.Data;
 
 @Data
 public class PayPalCheckoutRequest {
+    private java.util.List<Long> productIds;
     @NotNull
     private Long addressId;
 }

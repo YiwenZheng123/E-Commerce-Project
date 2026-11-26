@@ -16,5 +16,7 @@ public class PayPalCheckout {
     private String amount;
     @Column(columnDefinition = "text")
     private String items;
+    @Column(columnDefinition = "text")
+    private String snapshot;
     private Long orderId;
 }

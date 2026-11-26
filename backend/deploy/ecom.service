@@ -1,0 +1,15 @@
+[Unit]
+Description=E-commerce Spring Boot backend
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=ec2-user
+WorkingDirectory=/home/ec2-user/ecom
+EnvironmentFile=/home/ec2-user/ecom/app.env
+ExecStart=/usr/bin/java -Xms64m -Xmx384m -jar /home/ec2-user/ecom/app.jar
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

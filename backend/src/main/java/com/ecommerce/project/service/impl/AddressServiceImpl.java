@@ -39,7 +39,7 @@ public class AddressServiceImpl implements AddressService{
 
     @Override
     public List<AddressDTO> getAddresses() {
-        List<Address> addresses = addressRepository.findAll();
+        List<Address> addresses = authUtil.loggedInUser().getAddresses();
         List<AddressDTO> addressDTOS = addresses.stream()
                 .map(address -> modelMapper.map(address, AddressDTO.class))
                 .toList();
@@ -51,6 +51,9 @@ public class AddressServiceImpl implements AddressService{
         Address SpecificAddress = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
 
+        if (!SpecificAddress.getUser().getUserId().equals(authUtil.loggedInUserId())) {
+            throw new ResourceNotFoundException("Address", "addressId", addressId);
+        }
         return modelMapper.map(SpecificAddress, AddressDTO.class);
     }
 
@@ -87,10 +90,19 @@ public class AddressServiceImpl implements AddressService{
 
     }
 
+    @Autowired
+    private com.ecommerce.project.repositories.OrderRepository orderRepository;
+
     @Override
+    @jakarta.transaction.Transactional
     public String deleteAddress(Long addressId) {
         Address addressFromDb = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+        if (!addressFromDb.getUser().getUserId().equals(authUtil.loggedInUserId())) {
+            throw new ResourceNotFoundException("Address", "addressId", addressId);
+        }
+        orderRepository.findByAddressAddressId(addressId).forEach(order -> order.setAddress(null));
+        orderRepository.flush();
         User user = addressFromDb.getUser();
         user.getAddresses().removeIf(address -> address.getAddressId().equals(addressId));
         userRepository.save(user);

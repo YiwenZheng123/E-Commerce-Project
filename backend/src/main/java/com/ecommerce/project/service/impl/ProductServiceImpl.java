@@ -71,6 +71,7 @@ public class ProductServiceImpl implements ProductService {
         }
         if (isProductNotPresent){
             Product product = modelMapper.map(productDTO, Product.class);
+            product.setProductId(null);
             product.setImage("default.png");
             product.setCategory(category);
             product.setUser(authUtil.loggedInUser());
@@ -183,6 +184,7 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct = productRepository.findById(productId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product", "productId", productId));
+        checkProductOwner(savedProduct);
         Product product = modelMapper.map(productDTO, Product.class);
         savedProduct.setCategory(product.getCategory());
         savedProduct.setProductName(product.getProductName());
@@ -209,14 +211,21 @@ public class ProductServiceImpl implements ProductService {
         return modelMapper.map(newProduct, ProductDTO.class);
     }
 
+    @Autowired
+    private com.ecommerce.project.repositories.OrderItemRepository orderItemRepository;
+
     @Override
+    @jakarta.transaction.Transactional
     public ProductDTO deleteProduct(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product", "productId", productId)
                 );
+        checkProductOwner(product);
         List<Cart> carts = cartRepository.findCartsByProductId(productId);
         carts.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(), productId));
+        orderItemRepository.findByProductProductId(productId).forEach(item -> item.setProduct(null));
+        orderItemRepository.flush();
         productRepository.delete(product);
         return modelMapper.map(product,ProductDTO.class);
     }
@@ -226,10 +235,12 @@ public class ProductServiceImpl implements ProductService {
         // Get the product from DB
         Product productFromDb = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+        checkProductOwner(productFromDb);
         // upload image to server
         // Get the file name of uploaded image
         String fileName = fileService.uploadImage(this.image, image);
         // Updating the new file name to the product
+        // Keep old image files: order and pending-payment snapshots may reference them.
         productFromDb.setImage(fileName);
         // return DTO after mapping product to DTO
         return modelMapper.map(productRepository.save(productFromDb), ProductDTO.class);
@@ -288,5 +299,13 @@ public class ProductServiceImpl implements ProductService {
         return productResponse;
     }
 
+
+    private void checkProductOwner(Product product) {
+        User user = authUtil.loggedInUser();
+        boolean admin = user.getRoles().stream().anyMatch(role -> role.getRoleName() == com.ecommerce.project.model.AppRole.ROLE_ADMIN);
+        if (!admin && (product.getUser() == null || !user.getUserId().equals(product.getUser().getUserId()))) {
+            throw new ResourceNotFoundException("Product", "productId", product.getProductId());
+        }
+    }
 
 }

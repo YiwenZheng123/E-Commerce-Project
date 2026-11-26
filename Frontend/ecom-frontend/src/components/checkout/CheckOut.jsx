@@ -1,3 +1,4 @@
+import { Navigate } from 'react-router-dom';
 import { Step, StepLabel, Stepper } from '@mui/material';
 import React from 'react'
 import { useState } from 'react';
@@ -18,7 +19,9 @@ const CheckOut = () => {
     const dispatch = useDispatch();
     const { isLoading, errorMessage } = useSelector((state) => state.errors);
     const { address, selectedUserCheckoutAddress } = useSelector((state) => state.auth);
-    const {totalPrice, cart} = useSelector((state) => state.carts);
+    const {cart: allItems, selectedIds = []} = useSelector((state) => state.carts);
+    const cart = allItems.filter(item => selectedIds.includes(item.productId));
+    const totalPrice = cart.reduce((sum, item) => sum + item.specialPrice * item.quantity, 0);
     const steps = [
         "Address",
         "Payment Method",
@@ -26,6 +29,9 @@ const CheckOut = () => {
         "Payment"
     ];
     const handleBack = () => {
+        dispatch({ type: "IS_SUCCESS" });
+        dispatch({ type: "CLIENT_SECRET", payload: null });
+        localStorage.removeItem("client-secret");
         setActiveStep((prevStep) => prevStep - 1);
     }
     const handleNext = () => {
@@ -46,6 +52,7 @@ const CheckOut = () => {
     useEffect(() => {
         dispatch(getUserAddresses());
     }, [dispatch])
+    if (!cart.length) return <Navigate to="/cart" replace />;
     return (
         <div className='py-14 min-h-[calc(100vh-100px)]'>
             <Stepper activeStep={activeStep} alternativeLabel>

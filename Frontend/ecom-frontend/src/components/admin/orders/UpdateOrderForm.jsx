@@ -8,17 +8,9 @@ import { updateOrderStatusFromDashboard } from '../../../store/actions'
 import toast from 'react-hot-toast'
 import { useSelector } from 'react-redux'
 
-const ORDER_STATUSES = [
-    "Pending",
-    "Processing",
-    "Shipped",
-    "Delivered",
-    "Cancelled",
-    "Accepted"
-]
-
 const UpdateOrderForm = ({ setOpen, selectedId, selectedItem, loader, setLoader }) => {
-    const [orderStatus, setOrderStatus] = useState(selectedItem?.status || "Accepted");
+    const nextStatus = { Accepted: "Processing", Processing: "Shipped", Shipped: "Delivered" }[selectedItem?.status];
+    const [orderStatus, setOrderStatus] = useState(nextStatus || "");
     const [error, setError] = useState("");
     const {user} = useSelector((state) => state.auth)
     const isAdmin = user && user?.roles?.includes("ROLE_ADMIN")
@@ -30,13 +22,15 @@ const UpdateOrderForm = ({ setOpen, selectedId, selectedItem, loader, setLoader 
             return;
         
         }
-        dispatch(updateOrderStatusFromDashboard(selectedId, orderStatus, toast, setLoader, isAdmin));
+        dispatch(updateOrderStatusFromDashboard(selectedId, orderStatus, toast, setLoader, isAdmin))
+            .then(success => { if (success) setOpen(false); });
     }
     return (
         <div className='py-5 relative h-full'>
             <form className='space-y-4' onSubmit={updateOrderStatus}>
-                <FormControl fullWidth variant='outlined' error={!!error}>
-                    <InputLabel>Order Status</InputLabel>
+                {!nextStatus && <p className="text-slate-600">This order has no available status changes. Paid orders needing attention require separate support review.</p>}
+                {nextStatus && <FormControl fullWidth variant='outlined' error={!!error}>
+                    <InputLabel id="order-status-label">Order Status</InputLabel>
                     <Select
                         labelId='order-status-label'
                         label='Order Status'
@@ -47,17 +41,13 @@ const UpdateOrderForm = ({ setOpen, selectedId, selectedItem, loader, setLoader 
 
                         }}
                     >
-                        {ORDER_STATUSES.map((status) => (
-                            <MenuItem key={status} value={status}>
-                                {status}
-                            </MenuItem>
-                        ))}
+                        <MenuItem value={nextStatus}>{nextStatus}</MenuItem>
 
                     </Select>
                     {error && <FormHelperText>{error}</FormHelperText>}
 
 
-                </FormControl>
+                </FormControl>}
 
                 <div className='flex w-full justify-between items-center absolute bottom-14'>
                     <Button
@@ -70,7 +60,7 @@ const UpdateOrderForm = ({ setOpen, selectedId, selectedItem, loader, setLoader 
                     </Button>
 
                     <Button
-                        disabled={loader}
+                        disabled={loader || !nextStatus}
                         type='submit'
                         variant='contained'
                         color='primary'

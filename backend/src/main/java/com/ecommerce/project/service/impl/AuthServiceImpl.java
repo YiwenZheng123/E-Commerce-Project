@@ -174,7 +174,7 @@ public class AuthServiceImpl implements AuthService {
                 .collect(Collectors.toList());
 
         UserInfoResponse response = new UserInfoResponse(userDetails.getId(),
-                userDetails.getUsername(), roles, userDetails.getEmail(), jwtCookie.toString());
+                userDetails.getUsername(), roles, userDetails.getEmail(), null);
         if (userDetails.getAvatar() != null) {
             response.setAvatarUrl(imageBaseUrl.replaceAll("/+$", "") + "/" + userDetails.getAvatar());
         }
@@ -199,37 +199,11 @@ public class AuthServiceImpl implements AuthService {
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
 
-        Set<String> strRoles = signUpRequest.getRoles();
-        Set<Role> roles = new HashSet<>();
-
-        if (strRoles == null) {
-            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-            roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "admin":
-                        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
-
-                        break;
-                    case "seller":
-                        Role modRole = roleRepository.findByRoleName(AppRole.ROLE_SELLER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
-
-                        break;
-                    default:
-                        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                }
-            });
-        }
-
-        user.setRoles(roles);
+        AppRole roleName = signUpRequest.getRoles() != null && signUpRequest.getRoles().contains("seller")
+                ? AppRole.ROLE_SELLER : AppRole.ROLE_USER;
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+        user.setRoles(Set.of(role));
         userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
@@ -258,7 +232,14 @@ public class AuthServiceImpl implements AuthService {
         Page<User> allUsers = userRepository.findByRoleName(AppRole.ROLE_SELLER, pageable);
         List<UserDTO> userDTOS = allUsers.getContent()
                 .stream()
-                .map(p -> modelMapper.map(p, UserDTO.class))
+                .map(user -> {
+                    UserDTO dto = new UserDTO();
+                    dto.setUserId(user.getUserId());
+                    dto.setUsername(user.getUserName());
+                    dto.setEmail(user.getEmail());
+                    dto.setRoles(user.getRoles().stream().map(role -> role.getRoleName().name()).collect(Collectors.toSet()));
+                    return dto;
+                })
                 .toList();
         UserResponse response = new UserResponse();
         response.setContent(userDTOS);

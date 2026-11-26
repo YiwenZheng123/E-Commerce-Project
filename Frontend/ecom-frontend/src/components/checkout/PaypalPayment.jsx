@@ -11,6 +11,7 @@ const PaypalPayment = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { user, selectedUserCheckoutAddress } = useSelector((state) => state.auth);
+    const { selectedIds } = useSelector((state) => state.carts);
     const pendingKey = `paypal-pending-${user.id}`;
     const [pendingOrder, setPendingOrder] = useState(() => localStorage.getItem(pendingKey));
     const [loading, setLoading] = useState(false);
@@ -21,13 +22,12 @@ const PaypalPayment = () => {
         setLoading(true);
         setErrorMessage('');
         try {
-            await api.post(`/order/paypal/${orderId}/capture`);
+            const { data } = await api.post(`/order/paypal/${orderId}/capture`);
             localStorage.removeItem(pendingKey);
             localStorage.removeItem('CHECKOUT_ADDRESS');
             dispatch({ type: 'REMOVE_CLIENT_SECRET_ADDRESS' });
             await dispatch(getUserCart());
-            toast.success('Order Accepted');
-            navigate('/order-confirm');
+            navigate(`/order-confirm?orderId=${data.orderId}`);
         } catch (error) {
             if (error?.response?.data?.message === 'INSTRUMENT_DECLINED') {
                 localStorage.removeItem(pendingKey);
@@ -68,7 +68,7 @@ const PaypalPayment = () => {
                 <PayPalScriptProvider options={{ clientId, currency: 'USD', intent: 'capture' }}>
                     <PayPalButtons
                         createOrder={async () => {
-                            const { data } = await api.post('/order/paypal', { addressId: selectedUserCheckoutAddress.addressId });
+                            const { data } = await api.post('/order/paypal', { addressId: selectedUserCheckoutAddress.addressId, productIds: selectedIds });
                             return data.id;
                         }}
                         onApprove={async (data, actions) => {

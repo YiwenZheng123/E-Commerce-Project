@@ -47,6 +47,12 @@ class PayPalServiceTest {
                 "checkoutRepository", checkouts).entrySet()) {
             ReflectionTestUtils.setField(service, entry.getKey(), entry.getValue());
         }
+        OrderSnapshotService snapshots = new OrderSnapshotService();
+        for (var entry : java.util.Map.of("carts", carts, "cartItems", cartItems, "addresses", addresses, "products", products,
+                "payments", payments, "orders", orders, "orderItems", orderItems, "modelMapper", new org.modelmapper.ModelMapper()).entrySet()) {
+            ReflectionTestUtils.setField(snapshots, entry.getKey(), entry.getValue());
+        }
+        ReflectionTestUtils.setField(service, "snapshots", snapshots);
         ReflectionTestUtils.setField(service, "clientId", "sandbox-client");
         ReflectionTestUtils.setField(service, "clientSecret", "sandbox-secret");
         RestClient.Builder builder = RestClient.builder().baseUrl("https://api-m.sandbox.paypal.com");
@@ -61,6 +67,7 @@ class PayPalServiceTest {
         product = new Product();
         product.setProductId(3L);
         product.setStock(10);
+        product.setSpecialPrice(10.0);
         cart = new Cart();
         cart.setCartId(4L);
         cart.setTotalPrice(20.0);
@@ -78,6 +85,7 @@ class PayPalServiceTest {
         when(auth.loggedInUser()).thenReturn(user);
         when(addresses.findById(2L)).thenReturn(Optional.of(address));
         when(carts.findCartByEmail(user.getEmail())).thenReturn(cart);
+        when(products.deductStock(3L, 2)).thenReturn(1);
         when(products.findById(3L)).thenReturn(Optional.of(product));
         when(checkouts.findForUpdate("PAYPAL123")).thenReturn(Optional.of(checkout));
     }
@@ -89,13 +97,27 @@ class PayPalServiceTest {
 
     @Test
     void createUsesServerCartAndIncludesTax() {
+        Product otherProduct = new Product();
+        otherProduct.setProductId(9L);
+        CartItem otherItem = new CartItem();
+        otherItem.setProduct(otherProduct);
+        otherItem.setQuantity(1);
+        otherItem.setProductPrice(50.0);
+        cart.setCartItems(List.of(item, otherItem));
         token();
         server.expect(requestTo("https://api-m.sandbox.paypal.com/v2/checkout/orders"))
                 .andExpect(content().json("{\"intent\":\"CAPTURE\",\"purchase_units\":[{\"amount\":{\"currency_code\":\"USD\",\"value\":\"22.60\"}}]}"))
                 .andRespond(withSuccess("{\"id\":\"PAYPAL123\"}", MediaType.APPLICATION_JSON));
-        assertEquals("PAYPAL123", service.createOrder(2L));
+        assertEquals("PAYPAL123", service.createOrder(2L, List.of(3L)));
         verify(checkouts).save(argThat(saved -> saved.getAmount().equals("22.60") && saved.getUserId().equals(7L)));
         server.verify();
+    }
+
+    @Test
+    void rejectsEmptyAndForeignSelectionsBeforePayment() {
+        assertThrows(APIException.class, () -> service.createOrder(2L, List.of()));
+        assertThrows(APIException.class, () -> service.createOrder(2L, List.of(99L)));
+        verifyNoInteractions(checkouts);
     }
 
     @Test
@@ -104,13 +126,19 @@ class PayPalServiceTest {
         User owner = new User();
         owner.setUserId(7L);
         address.setUser(owner);
-        assertThrows(ResourceNotFoundException.class, () -> service.createOrder(2L));
+        assertThrows(ResourceNotFoundException.class, () -> service.createOrder(2L, List.of(3L)));
         assertThrows(ResourceNotFoundException.class, () -> service.captureOrder("PAYPAL123"));
         verifyNoInteractions(payments, orders);
     }
 
     @Test
     void retriesExistingCompletedPaymentWithoutCapturingAgain() {
+        product.setProductName("Original name"); product.setImage("old.png"); address.setStreet("Original Street");
+        var snapshots = (OrderSnapshotService) ReflectionTestUtils.getField(service, "snapshots");
+        checkout.setSnapshot(snapshots.encode(snapshots.capture(address, List.of(item))));
+        product.setProductName("Changed name"); product.setImage("new.png"); product.setSpecialPrice(999);
+        when(addresses.findById(2L)).thenReturn(Optional.empty());
+        cart.setTotalPrice(70.0);
         token();
         server.expect(requestTo("https://api-m.sandbox.paypal.com/v2/checkout/orders/PAYPAL123"))
                 .andRespond(withSuccess("{\"status\":\"COMPLETED\",\"purchase_units\":[{\"payments\":{\"captures\":[{\"id\":\"CAPTURE1\",\"status\":\"COMPLETED\",\"amount\":{\"currency_code\":\"USD\",\"value\":\"22.60\"}}]}}]}", MediaType.APPLICATION_JSON));
@@ -121,9 +149,12 @@ class PayPalServiceTest {
         });
         when(cartItems.findCartItemByProductIdAndCartId(4L, 3L)).thenReturn(item);
         assertEquals(99L, service.captureOrder("PAYPAL123"));
-        assertEquals(8, product.getStock());
+        verify(products).deductStock(3L, 2);
+        verify(orderItems).save(argThat(line -> "Original name".equals(line.getSnapshotProductName()) && "old.png".equals(line.getSnapshotImage()) && line.getOrderedProductPrice() == 10));
+        verify(orders).save(argThat(order -> order.getAddress() == null && order.getAddressSnapshot().contains("Original Street")));
         assertEquals(99L, checkout.getOrderId());
-        assertEquals(0.0, cart.getTotalPrice());
+        assertEquals(50.0, cart.getTotalPrice());
+        verify(cartItems, never()).deleteCartItemByProductIdAndCartId(4L, 9L);
         assertEquals(99L, service.captureOrder("PAYPAL123"));
         verify(orders, times(1)).save(any());
         server.verify();

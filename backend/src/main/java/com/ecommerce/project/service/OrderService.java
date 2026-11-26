@@ -5,6 +5,10 @@ import com.ecommerce.project.payload.OrderResponse;
 import jakarta.transaction.Transactional;
 
 public interface OrderService {
+    OrderResponse getMyOrders(Integer pageNumber, Integer pageSize);
+
+    OrderDTO getMyOrder(Long orderId);
+
     @Transactional
     OrderDTO placeOrder(String email, Long addressId, String paymentMethod, String pgName, String pgPaymentId, String pgStatus, String pgResponseMessage);
 

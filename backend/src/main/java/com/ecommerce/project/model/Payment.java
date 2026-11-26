@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Data
-@Table(name = "payments")
+@Table(name = "payments", uniqueConstraints =
+        @UniqueConstraint(name = "uk_payment_gateway_id", columnNames = {"pgName", "pgPaymentId"}))
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {

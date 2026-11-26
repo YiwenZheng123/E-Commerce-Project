@@ -28,6 +28,7 @@ const initialState = {
     },
     carts: {
         cart: cartItems,
+        selectedIds: JSON.parse(localStorage.getItem("cartSelectedIds") || "[]"),
     }
 };
 

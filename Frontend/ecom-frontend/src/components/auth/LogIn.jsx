@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FiArrowLeft, FiShoppingBag } from "react-icons/fi";
-import { useNavigate } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import InputField from "../shared/InputField";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -11,6 +11,8 @@ import  Spinners  from "../shared/Spinners";
 
 const LogIn = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnToCart = searchParams.get("checkout") === "1";
     const [loader, setLoader] = useState(false);
     const dispatch = useDispatch();
     const {
@@ -25,7 +27,7 @@ const LogIn = () => {
 
     const loginHandler = async (data) => {
         console.log("Login Click");
-        dispatch(authenticateSignInUser(data, toast, reset, navigate, setLoader));
+        dispatch(authenticateSignInUser(data, toast, reset, navigate, setLoader, returnToCart));
     }
     return (
         <main className="min-h-[calc(100dvh-70px)] bg-slate-50 px-4 py-10 sm:py-16">
@@ -92,7 +94,7 @@ const LogIn = () => {
                 <p className="mb-4 text-sm text-slate-500">New to E-Shop?</p>
                 <Link
                     className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-500 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-                    to="/register">
+                    to={returnToCart ? "/register?checkout=1" : "/register"}>
                     Create an account
                 </Link>  
                 

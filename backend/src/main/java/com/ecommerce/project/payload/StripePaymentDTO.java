@@ -7,6 +7,7 @@ import java.util.Map;
 
 @Data
 public class StripePaymentDTO {
+    private java.util.List<Long> productIds;
     private Long amount;
     private String currency;
     private String email;

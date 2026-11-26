@@ -30,6 +30,9 @@ public class JwtUtils {
     @Value("${spring.ecom.app.jwtCookie}")
     private String jwtCookie;
 
+    @Value("${spring.ecom.app.cookieSecure:false}")
+    private boolean cookieSecure;
+
 //    public String getJwtFromHeader(HttpServletRequest request) {
 //        String bearerToken = request.getHeader("Authorization");
 //        logger.debug("Authorization Header: {}", bearerToken);
@@ -51,8 +54,9 @@ public class JwtUtils {
         ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt)
                 .path("/api")
                 .maxAge(24*60*60)
-                .httpOnly(false)
-                .secure(false)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
                 .build();
         return cookie;
     }
@@ -61,6 +65,9 @@ public class JwtUtils {
         ResponseCookie cookie = ResponseCookie.from(jwtCookie, null)
                 .path("/api")
                 .maxAge(0)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
                 .build();
         return cookie;
     }

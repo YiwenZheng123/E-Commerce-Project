@@ -1,97 +1,84 @@
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
-import { Divider } from '@mui/material';
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react';
+import { MdClose, MdDone, MdImageNotSupported } from 'react-icons/md';
+import { formatPrice } from '../../utils/formatPrice';
 
-import Status from './Status';
-import { MdClose, MdDone } from 'react-icons/md';
-
-function ProductViewModal({open, setOpen, product, isAvailable}) {
-  
-  const {productName, image, description, price, specialPrice} = product;
+function ProductViewModal({ open, setOpen, product, isAvailable }) {
+  const { productName, image, description, price, specialPrice } = product;
+  const hasDiscount = specialPrice != null && Number(specialPrice) < Number(price);
 
   return (
-    <>
-      <Dialog open={open} as="div" className="relative z-10" onClose={() => setOpen(false)}>
-      <DialogBackdrop className="fixed inset-0 bg-gray-500/75 transition-opacity" />
-        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
-            <DialogPanel
-              transition
-              className="relative w-full max-w-[620px] overflow-hidden rounded-lg bg-white shadow-xl transition-all"
+    <Dialog open={open} onClose={() => setOpen(false)} className="relative z-[60]">
+      <DialogBackdrop transition className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-200 data-closed:opacity-0 motion-reduce:transition-none" />
+      <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-6">
+        <DialogPanel
+          transition
+          className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl transition duration-200 data-closed:translate-y-2 data-closed:opacity-0 motion-reduce:transition-none sm:max-h-[calc(100dvh-3rem)]"
+        >
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-3 sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Product details</p>
+            <button
+              type="button"
+              aria-label="Close product details"
+              data-autofocus
+              onClick={() => setOpen(false)}
+              className="flex size-11 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
-                {image && (
-                    <div className="aspect-[3/2] bg-gray-100">
-                    <img 
-                    className="h-full w-full object-contain"
-                    src={image}
-                    alt={productName} />
-                    </div>
+              <MdClose aria-hidden="true" className="size-6" />
+            </button>
+          </div>
+          <div className="min-h-0 overflow-y-auto overscroll-contain">
+            <div className="grid md:grid-cols-2">
+              <div className="flex min-w-0 items-center justify-center bg-slate-50 p-6 sm:p-10">
+                {image ? (
+                  <img src={image} alt={productName} className="h-56 w-full object-contain sm:h-72 md:h-96" />
+                ) : (
+                  <div className="flex h-56 flex-col items-center justify-center gap-3 text-slate-400 md:h-96">
+                    <MdImageNotSupported aria-hidden="true" className="size-10" />
+                    <span className="text-sm">No image available</span>
+                  </div>
                 )}
-
-
-
-                <div className="px-6 pt-6 pb-2">
-                <DialogTitle as="h1" className="mb-4 break-words text-xl font-semibold leading-snug text-gray-800 sm:text-2xl lg:text-3xl">
-                {productName}
-              </DialogTitle>
-
-
-              <div className="space-y-2 text-gray-700 pb-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  {specialPrice ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-gray-400 line-through">
-                        ${Number(price).toFixed(2)}
-                      </span>
-                      <span className="sm:text-xl font-semibold text-slate-700">
-                        ${Number(specialPrice).toFixed(2)}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-xl font-bold">
-                      {" "}
-                      ${Number(price).toFixed(2)}
+              </div>
+              <div className="flex min-w-0 flex-col p-6 sm:p-8 md:p-10">
+                <span className={`mb-5 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${isAvailable ? 'bg-emerald-50 text-emerald-800' : 'bg-rose-50 text-rose-700'}`}>
+                  {isAvailable ? <MdDone aria-hidden="true" className="size-4" /> : <MdClose aria-hidden="true" className="size-4" />}
+                  {isAvailable ? 'In stock' : 'Out of stock'}
+                </span>
+                <DialogTitle as="h2" className="break-words text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                  {productName}
+                </DialogTitle>
+                <div className="mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <span className="text-3xl font-semibold tracking-tight text-slate-900">
+                    <span className="sr-only">Current price: </span>
+                    {formatPrice(hasDiscount ? specialPrice : price)}
+                  </span>
+                  {hasDiscount && (
+                    <span className="text-base text-slate-500 line-through">
+                      <span className="sr-only">Original price: </span>
+                      {formatPrice(price)}
                     </span>
                   )}
-
-                  {isAvailable ? (
-                    <Status
-                      text="In Stock"
-                      icon={MdDone}
-                      bg="bg-teal-200"
-                      color="text-teal-900"
-                    />
-                  ) : (
-                    <Status
-                      text="Out-Of-Stock"
-                      icon={MdClose}
-                      bg="bg-rose-200"
-                      color="text-rose-700"
-                    />
-                  )}
                 </div>
-
-                <Divider />
-
-                <p className="break-words leading-relaxed">{description}</p>
+                {hasDiscount && <p className="mt-2 text-sm font-medium text-emerald-700">You save {formatPrice(price - specialPrice)}</p>}
+                <div className="my-7 border-t border-slate-200 pt-6">
+                  <h3 className="mb-3 text-sm font-semibold text-slate-900">About this product</h3>
+                  <p className="whitespace-pre-line break-words text-sm leading-7 text-slate-600">
+                    {description || 'No description available.'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="mt-auto min-h-12 w-full rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  Close preview
+                </button>
               </div>
-                </div>
-
-
-            <div className="px-6 py-4 flex justify-end gap-4">
-              <button
-                onClick={() => setOpen(false)}
-                type="button"
-                className="px-4 py-2 text-sm font-semibold text-slate-700 border border-slate-700 hover:text-slate-800 hover:border-slate-800 rounded-md "
-              >
-                Close
-              </button>
             </div>
-            </DialogPanel>
           </div>
-        </div>
-      </Dialog>
-    </>
-  )
+        </DialogPanel>
+      </div>
+    </Dialog>
+  );
 }
 
 export default ProductViewModal;

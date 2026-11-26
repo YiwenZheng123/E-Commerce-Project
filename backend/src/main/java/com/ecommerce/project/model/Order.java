@@ -36,6 +36,9 @@ public class Order {
 
     private Double totalAmount;
 
+    @Column(columnDefinition = "text")
+    private String addressSnapshot;
+    private Boolean snapshotBackfilled;
     private String orderStatus;
 
     @ManyToOne

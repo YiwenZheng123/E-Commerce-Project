@@ -66,7 +66,7 @@ class SbEcomApplicationTests {
 	@Transactional
 	void createCategoryReturnsCreated() throws Exception {
 		String categoryName = "TestCategory-" + UUID.randomUUID();
-		mockMvc.perform(post("/api/public/categories")
+		mockMvc.perform(post("/api/admin/categories")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"categoryName\":\"" + categoryName + "\"}"))
 				.andExpect(status().isCreated())

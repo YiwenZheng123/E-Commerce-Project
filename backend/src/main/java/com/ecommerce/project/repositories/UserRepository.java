@@ -19,6 +19,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUserName(String username);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT u FROM User u WHERE u.userId = :id")
+    Optional<User> lockForPaymentConfirmation(@Param("id") Long id);
+
     boolean existsByUserName(@NotBlank @Size(min = 3, max = 20) String username);
 
 

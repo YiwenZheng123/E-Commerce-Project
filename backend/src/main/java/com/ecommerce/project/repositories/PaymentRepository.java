@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long>{
+    java.util.Optional<Payment> findByPgNameAndPgPaymentId(String pgName, String pgPaymentId);
 }

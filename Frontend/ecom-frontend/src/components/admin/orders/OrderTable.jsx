@@ -1,12 +1,14 @@
 import { DataGrid } from '@mui/x-data-grid';
 import { adminOrderTableColumn } from '../../helper/tableColumn';
 import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../../shared/Modal';
 import UpdateOrderForm from './UpdateOrderForm';
 
 
 const OrderTable = ({ adminOrder, pagination }) => {
+    const isAdmin = useSelector(state => state.auth.user?.roles?.includes("ROLE_ADMIN"));
     const [updateOpenModal, setUpdateOpenModal] = useState(false);
     const [selectedItem, setSelectedItem] = useState("");
     const [loader, setLoader] = useState(false);
@@ -14,7 +16,8 @@ const OrderTable = ({ adminOrder, pagination }) => {
         return {
             id: item.orderId,
             email: item.email,
-            totalAmount: item.totalAmount,
+            totalAmount: isAdmin ? item.totalAmount : item.itemsSubtotal,
+            items: item.orderItems?.map(line => `${line.product.productName} × ${line.quantity}`).join(", "),
             status: item.orderStatus,
             date: item.orderDate,
         }
@@ -39,10 +42,16 @@ const OrderTable = ({ adminOrder, pagination }) => {
         setUpdateOpenModal(true);
     }
 
+    const columns = adminOrderTableColumn(handleEdit)
+        .filter(column => isAdmin || !["email", "action"].includes(column.field))
+        .map(column => !isAdmin && column.field === "totalAmount"
+            ? { ...column, sortable: false, headerName: "Your items subtotal", renderHeader: () => <span>Your items subtotal</span> } : column);
+    if (!isAdmin) columns.splice(1, 0, { field: "items", headerName: "Your items", width: 280, sortable: false });
+
     return (
         <div>
             <h1 className='text-slate-800 text-3xl text-center font-bold pb-6 uppercase'>
-                All Orders
+                {isAdmin ? "All Orders" : "Your order items"}
             </h1>
 
 
@@ -50,7 +59,7 @@ const OrderTable = ({ adminOrder, pagination }) => {
                 <DataGrid
                     className='w-full'
                     rows={tableRecords}
-                    columns={adminOrderTableColumn(handleEdit)}
+                    columns={columns}
                     paginationMode='server'
                     rowCount={pagination?.totalElements || 0}
                     initialState={{
@@ -74,11 +83,12 @@ const OrderTable = ({ adminOrder, pagination }) => {
                 />
             </div>
 
-            <Modal
+            {isAdmin && <Modal
                 open={updateOpenModal}
                 setOpen={setUpdateOpenModal}
                 title='Update Order Status'>
                 <UpdateOrderForm
+                    key={`${selectedItem.id}:${selectedItem.status}`}
                     setOpen={setUpdateOpenModal}
                     open={updateOpenModal}
                     loader={loader}
@@ -88,7 +98,7 @@ const OrderTable = ({ adminOrder, pagination }) => {
 
                 />
 
-            </Modal>
+            </Modal>}
         </div>
     )
 }

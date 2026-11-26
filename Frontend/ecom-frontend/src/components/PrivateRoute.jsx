@@ -9,7 +9,7 @@ const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
     const location = useLocation();
 
     if (publicPage) {
-        return user ? <Navigate to="/" /> : <Outlet />;
+        return user ? <Navigate to={new URLSearchParams(location.search).get("checkout") === "1" ? "/cart" : "/"} /> : <Outlet />;
     }
 
     if (adminOnly) {
@@ -29,7 +29,7 @@ const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
 
     }
 
-    return user ? <Outlet /> : <Navigate to="/login" />;
+    return user ? <Outlet /> : <Navigate to={location.pathname === "/checkout" ? "/login?checkout=1" : "/login"} />;
 }
 
 export default PrivateRoute

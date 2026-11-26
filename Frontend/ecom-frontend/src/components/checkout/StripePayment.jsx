@@ -14,14 +14,16 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const StripePayment = () => {
   const dispatch = useDispatch();
   const { clientSecret } = useSelector((state) => state.auth);
-  const { totalPrice } = useSelector((state) => state.carts);
+  const { cart, selectedIds = [] } = useSelector((state) => state.carts);
+  const totalPrice = cart.filter(item => selectedIds.includes(item.productId)).reduce((sum, item) => sum + item.specialPrice * item.quantity, 0) * 1.13;
   const { isLoading, errorMessage } = useSelector((state) => state.errors);
   const {user, selectedUserCheckoutAddress} = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (!clientSecret) {
+    if (!clientSecret && !errorMessage) {
       const sendData = {
-        amount: Number(totalPrice) * 100,
+        amount: Math.round(totalPrice * 100),
+        productIds: selectedIds,
         currency: "usd",
         email: user.email,
         name: `${user.username}`,

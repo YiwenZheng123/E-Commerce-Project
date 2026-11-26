@@ -26,6 +26,10 @@ public class OrderItem {
     private Order order;
 
 
+    private Long snapshotProductId;
+    private Long snapshotSellerId;
+    private String snapshotProductName;
+    private String snapshotImage;
     private Integer quantity;
     private double discount;
     private double orderedProductPrice;

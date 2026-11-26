@@ -48,6 +48,9 @@ public class CartController {
     public ResponseEntity<CartDTO> getCartById(){
         String email = authUtil.loggedInEmail();
         Cart cart = cartRepository.findCartByEmail(email);
+        if (cart == null) {
+            return ResponseEntity.ok(new CartDTO());
+        }
         Long cartId = cart.getCartId();
         CartDTO cartDTO = cartService.getCart(email, cartId);
         return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
@@ -63,6 +66,9 @@ public class CartController {
     @DeleteMapping("/carts/{cartId}/product/{productId}")
     public ResponseEntity<String> deleteProductFromCart(@PathVariable Long productId,
                                                           @PathVariable Long cartId){
+        if (cartRepository.findCartByEmailAndCartId(authUtil.loggedInEmail(), cartId) == null) {
+            throw new com.ecommerce.project.exceptions.ResourceNotFoundException("Cart", "cartId", cartId);
+        }
         String status = cartService.deleteProductFromCart(cartId, productId);
         return new ResponseEntity<String>(status, HttpStatus.OK);
     }

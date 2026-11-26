@@ -18,5 +18,13 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     Page<Product> findByProductNameLikeIgnoreCase(String keyword, Pageable pageDetails);
 
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true)
+    @Query("update Product p set p.stock = p.stock - :quantity where p.productId = :productId and p.stock >= :quantity")
+    int deductStock(Long productId, int quantity);
+
+    @org.springframework.data.jpa.repository.Modifying(flushAutomatically = true)
+    @Query("update Product p set p.stock = p.stock + :quantity where p.productId = :productId")
+    int restoreStock(Long productId, int quantity);
+
     Page<Product> findByUser(User user, Pageable pageDetails);
 }

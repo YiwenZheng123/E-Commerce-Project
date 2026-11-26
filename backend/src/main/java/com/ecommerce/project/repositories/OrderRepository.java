@@ -10,12 +10,20 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
+    java.util.List<Order> findBySnapshotBackfilledIsNull();
+
+    java.util.List<Order> findByAddressAddressId(Long addressId);
+
+    Page<Order> findByEmail(String email, Pageable pageable);
+
+    java.util.Optional<Order> findByOrderIdAndEmail(Long orderId, String email);
+
     @Query(value = """
             SELECT DISTINCT o FROM Order o JOIN o.orderItems oi
-            WHERE oi.product.user.userId = :sellerId
+            WHERE oi.snapshotSellerId = :sellerId
             """, countQuery = """
             SELECT COUNT(DISTINCT o) FROM Order o JOIN o.orderItems oi
-            WHERE oi.product.user.userId = :sellerId
+            WHERE oi.snapshotSellerId = :sellerId
             """)
     Page<Order> findOrdersBySellerId(@Param("sellerId") Long sellerId, Pageable pageable);
 

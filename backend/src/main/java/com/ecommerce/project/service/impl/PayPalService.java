@@ -42,6 +42,9 @@ public class PayPalService {
     @Autowired
     private PayPalCheckoutRepository checkoutRepository;
 
+    @Autowired
+    private OrderSnapshotService snapshots;
+
     @Value("${paypal.client-id:}")
     private String clientId;
     @Value("${paypal.client-secret:}")
@@ -64,7 +67,7 @@ public class PayPalService {
     }
 
     @Transactional
-    public String createOrder(Long addressId) {
+    public String createOrder(Long addressId, List<Long> productIds) {
         User user = authUtil.loggedInUser();
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
@@ -75,12 +78,8 @@ public class PayPalService {
         if (cart == null || cart.getCartItems().isEmpty()) {
             throw new APIException("Cart is empty");
         }
-        List<CheckoutItem> items = cart.getCartItems().stream().map(item -> {
-            if (item.getQuantity() == null || item.getQuantity() <= 0 || item.getProduct().getStock() < item.getQuantity()) {
-                throw new APIException("Please check product quantities and stock before paying");
-            }
-            return new CheckoutItem(item.getProduct().getProductId(), item.getQuantity(), item.getProductPrice(), item.getDiscount());
-        }).toList();
+        var snapshot = snapshots.capture(address, CheckoutSelection.items(cart, productIds));
+        var items = snapshot.items();
         BigDecimal subtotal = items.stream().map(item -> BigDecimal.valueOf(item.price()).multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add).setScale(2, RoundingMode.HALF_UP);
         String amount = subtotal.multiply(new BigDecimal("1.13")).setScale(2, RoundingMode.HALF_UP).toPlainString();
@@ -97,7 +96,7 @@ public class PayPalService {
         checkout.setUserId(user.getUserId());
         checkout.setAddressId(addressId);
         checkout.setAmount(amount);
-        checkout.setItems(mapper.writeValueAsString(items));
+        checkout.setSnapshot(snapshots.encode(snapshot));
         checkoutRepository.save(checkout);
         return checkout.getPaypalOrderId();
     }
@@ -113,12 +112,25 @@ public class PayPalService {
         if (checkout.getOrderId() != null) {
             return checkout.getOrderId();
         }
-        CheckoutItem[] items = mapper.readValue(checkout.getItems(), CheckoutItem[].class);
+        if (checkout.getSnapshot() == null) {
+            // Older pending payments can only be backfilled from the remaining live records.
+            Address address = addressRepository.findById(checkout.getAddressId()).orElseThrow(() -> new APIException("Legacy payment address is unavailable. Please contact support."));
+            var oldItems = mapper.readValue(checkout.getItems(), CheckoutItem[].class);
+            var items = java.util.Arrays.stream(oldItems).map(item -> {
+                Product product = productRepository.findById(item.productId()).orElseThrow(() -> new APIException("Legacy payment product is unavailable. Please contact support."));
+                return new com.ecommerce.project.payload.CheckoutSnapshot.Item(item.productId(), product.getUser() == null ? null : product.getUser().getUserId(),
+                        product.getProductName(), product.getImage(), item.quantity(), item.price(), item.discount());
+            }).toList();
+            checkout.setSnapshot(snapshots.encode(new com.ecommerce.project.payload.CheckoutSnapshot(
+                    new org.modelmapper.ModelMapper().map(address, com.ecommerce.project.payload.AddressDTO.class), items, true)));
+        }
+        var snapshot = snapshots.decode(checkout.getSnapshot());
+        var items = snapshot.items();
         String token = accessToken();
         JsonNode result = client.get().uri("/v2/checkout/orders/{id}", paypalOrderId)
                 .headers(headers -> headers.setBearerAuth(token)).retrieve().body(JsonNode.class);
         if (!"COMPLETED".equals(result.path("status").asText())) {
-            for (CheckoutItem item : items) {
+            for (var item : items) {
                 Product product = productRepository.findById(item.productId())
                         .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", item.productId()));
                 if (product.getStock() < item.quantity()) {
@@ -150,40 +162,8 @@ public class PayPalService {
                 || new BigDecimal(checkout.getAmount()).compareTo(new BigDecimal(capture.path("amount").path("value").asText("0"))) != 0) {
             throw new APIException("PayPal payment was not completed. Please try again.");
         }
-        Address address = addressRepository.findById(checkout.getAddressId())
-                .orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", checkout.getAddressId()));
-        Order order = new Order();
-        order.setEmail(user.getEmail());
-        order.setOrderDate(LocalDate.now());
-        order.setTotalAmount(Double.valueOf(checkout.getAmount()));
-        order.setOrderStatus("Accepted !");
-        order.setAddress(address);
-        Payment payment = new Payment("online", capture.path("id").asText(), "COMPLETED", "Payment successful", "PayPal");
-        payment.setOrder(order);
-        paymentRepository.save(payment);
-        order.setPayment(payment);
-        Order savedOrder = orderRepository.save(order);
-        Cart cart = cartRepository.findCartByEmail(user.getEmail());
-        for (CheckoutItem item : items) {
-            Product product = productRepository.findById(item.productId()).orElseThrow();
-            OrderItem orderItem = new OrderItem();
-            orderItem.setProduct(product);
-            orderItem.setQuantity(item.quantity());
-            orderItem.setDiscount(item.discount());
-            orderItem.setOrderedProductPrice(item.price());
-            orderItem.setOrder(savedOrder);
-            orderItemRepository.save(orderItem);
-            product.setStock(product.getStock() - item.quantity());
-            productRepository.save(product);
-            if (cart != null) {
-                CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(cart.getCartId(), item.productId());
-                if (cartItem != null && cartItem.getQuantity() == item.quantity()
-                        && Double.compare(cartItem.getProductPrice(), item.price()) == 0) {
-                    cartItemRepository.deleteCartItemByProductIdAndCartId(cart.getCartId(), item.productId());
-                    cart.setTotalPrice(cart.getTotalPrice() - cartItem.getProductPrice() * cartItem.getQuantity());
-                }
-            }
-        }
+        Order savedOrder = snapshots.complete(snapshot, user.getEmail(), Double.parseDouble(checkout.getAmount()),
+                new Payment("online", capture.path("id").asText(), "COMPLETED", "Payment successful", "PayPal"));
         checkout.setOrderId(savedOrder.getOrderId());
         checkoutRepository.save(checkout);
         return savedOrder.getOrderId();

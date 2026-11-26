@@ -17,6 +17,9 @@ public class OrderDTO {
     private LocalDate orderDate;
     private PaymentDTO payment;
     private Double totalAmount;
+    private Double itemsSubtotal;
     private String orderStatus;
+    private Boolean snapshotBackfilled;
     private Long addressId;
+    private AddressDTO address;
 }

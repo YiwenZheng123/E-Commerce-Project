@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import InputField from "../shared/InputField";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -11,6 +11,8 @@ import  Spinners  from "../shared/Spinners";
 
 const Register = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const returnToCart = searchParams.get("checkout") === "1";
     const [loader, setLoader] = useState(false);
     const dispatch = useDispatch();
     const {
@@ -20,12 +22,11 @@ const Register = () => {
         formState: { errors },
     } = useForm({
         mode: "onTouched",
-
+        defaultValues: { accountType: "user" },
     });
 
-    const RegisterHandler = async (data) => {
-        console.log("Register Click");
-        dispatch(registerNewUser(data,toast, reset, navigate, setLoader));
+    const RegisterHandler = async ({ accountType, ...data }) => {
+        dispatch(registerNewUser({ ...data, roles: [accountType] },toast, reset, navigate, setLoader, returnToCart));
         
     }
     return (
@@ -50,6 +51,20 @@ const Register = () => {
                     <p className="mt-2 text-sm leading-6 text-slate-500">Your next great find starts here.</p>
                 </div>
             <div className="flex flex-col gap-5">
+                <div className="flex flex-col gap-1">
+                    <label htmlFor="accountType" className="font-semibold text-sm text-slate-800">
+                        Account type
+                    </label>
+                    <select
+                        id="accountType"
+                        disabled={loader}
+                        className="min-h-12 w-full rounded-md border border-slate-700 bg-white px-3 text-base text-slate-800 focus:outline-2 focus:outline-offset-2 focus:outline-blue-600"
+                        {...register("accountType")}
+                    >
+                        <option value="user">Buyer</option>
+                        <option value="seller">Seller</option>
+                    </select>
+                </div>
                 <InputField 
                     label="Username"
                     required
@@ -104,7 +119,7 @@ const Register = () => {
               <p className="mb-4 text-sm text-slate-500">Already have an account?</p>
               <Link
                 className="inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 transition-colors hover:border-slate-500 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-                to="/login">
+                to={returnToCart ? "/login?checkout=1" : "/login"}>
                 Sign in
               </Link>
             </div>
