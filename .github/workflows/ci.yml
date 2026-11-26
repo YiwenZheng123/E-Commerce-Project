@@ -29,7 +29,7 @@ jobs:
             DB_PASSWORD: postgres
             JWT_SECRET: Y2ktb25seS1kdW1teS1qd3Qtc2VjcmV0LWtleS1ub3QtZm9yLXByb2R1Y3Rpb24=
             STRIPE_SECRET_KEY: sk_test_ci_placeholder
-            
+
         steps:
             - name: Check out code
               uses: actions/checkout@v4
@@ -45,4 +45,39 @@ jobs:
               run: chmod +x mvnw
             - name: Run tests
               run: ./mvnw -B verify 
-              
+
+
+    frontend:
+            name: Frontend (lint + test + build)
+            runs-on: ubuntu-latest
+
+            defaults:
+                run:
+                    working-directory: Frontend/ecom-frontend
+
+
+                
+            steps:
+                - name: Check out code
+                  uses: actions/checkout@v4
+                
+                - name: Set up Node 22
+                  uses: actions/setup-node@v4
+                  with:
+                    node-version: 22
+                    cache: npm
+                    cache-dependency-path: Frontend/ecom-frontend/package-lock.json
+                    
+                - name: Install dependencies
+                  run: npm ci
+
+                - name: Lint
+                  run: npm run lint
+
+                - name: Unit tests
+                  run: npm run test:cart
+
+                - name: Build
+                  run: npm run build
+                  env:
+                    VITE_BACK_END_URL: http://localhost:8080
